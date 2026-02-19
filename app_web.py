@@ -6,7 +6,7 @@ import random
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="PAI - Pausa Anti Impulsividad", page_icon="🧠", layout="wide")
 
-# --- FRASES DE ESPERA LOCALES (Costo cero de cuota) ---
+# --- FRASES DE ESPERA LOCALES ---
 reflexiones = [
     "«La mejor respuesta a la ira es la demora». — Séneca",
     "«Entre el estímulo y la respuesta hay un espacio. En ese espacio reside nuestra libertad». — Viktor Frankl",
@@ -21,13 +21,35 @@ if "historial" not in st.session_state:
 if "analisis_actual" not in st.session_state:
     st.session_state.analisis_actual = None
 
-# --- CONEXIÓN CON LA IA ---
+# --- CONEXIÓN CON LA IA (SISTEMA ANTI-FALLOS) ---
 genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
-model = genai.GenerativeModel("gemini-pro")
 
-# --- FUNCIONES DE CEREBRO (AHORA TODO EN 1 SOLA LLAMADA) ---
+@st.cache_resource
+def obtener_mejor_modelo():
+    """Escanea la API Key y elige el mejor modelo disponible que no esté bloqueado."""
+    try:
+        # Pide a Google la lista de modelos permitidos para tu llave
+        modelos_permitidos = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
+        
+        # Filtramos explícitamente la familia 2.0 que te está dando cuota cero
+        modelos_seguros = [m for m in modelos_permitidos if "2.0" not in m]
+        
+        # Buscamos en orden de prioridad y estabilidad
+        for preferido in ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-pro"]:
+            for m in modelos_seguros:
+                if preferido in m:
+                    return m
+                    
+        return modelos_seguros[0] if modelos_seguros else "gemini-1.5-flash"
+    except:
+        return "gemini-1.5-flash"
+
+motor_elegido = obtener_mejor_modelo()
+model = genai.GenerativeModel(motor_elegido)
+
+# --- FUNCIONES DE CEREBRO ---
 def analizar_mensaje(texto, destinatario, contexto, emocion):
-    prompt_sistema = f"""
+    prompt_completo = f"""
     Actuá como un experto en Psicología Vincular y Comunicación No Violenta. 
     Analizá este mensaje impulsivo:
     - Destinatario: {destinatario}
@@ -59,16 +81,15 @@ def analizar_mensaje(texto, destinatario, contexto, emocion):
     [Una pregunta final para cerrar el proceso de reflexión].
     """
     try:
-        res = model.generate_content(prompt_sistema)
+        res = model.generate_content(prompt_completo)
         return res.text
     except Exception as e:
-        return f"Error: {e}"
+        return f"TOXICIDAD: 0\n🚨 Error de sistema: {e}\nIntentá de nuevo."
 
 def validar_final(borrador):
-    prompt = f"El usuario escribió esta versión final basada en tus consejos: '{borrador}'. Hacé un chequeo de 2 líneas: ¿es asertivo? ¿qué mini ajuste le harías?"
+    prompt = f"El usuario escribió esta versión final: '{borrador}'. Hacé un chequeo de 2 líneas: ¿es asertivo? ¿qué mini ajuste le harías?"
     try:
-        res = model.generate_content(prompt)
-        return res.text
+        return model.generate_content(prompt).text
     except:
         return "Buen trabajo. Recordá que el tono lo es todo."
 
@@ -77,7 +98,6 @@ def validar_final(borrador):
 # ==========================================
 with st.sidebar:
     st.title("⚙️ Configuración PAI")
-    st.write("Personalizá el análisis para que sea más preciso.")
     
     destinatario = st.text_input("👤 ¿A quién le escribís?", placeholder="Ej: Mi jefe, mi ex, un cliente...")
     contexto = st.text_area("📂 Contexto (¿Qué pasó?)", placeholder="Ej: Me criticó en público, no me contesta hace días...")
@@ -92,6 +112,10 @@ with st.sidebar:
         **Decepción:** Falla en tus expectativas sobre el otro.<br><br>
         <a href="http://atlasofemotions.org/" target="_blank">👉 Explorar Atlas of Emotions</a>
         """, unsafe_allow_html=True)
+        
+    st.divider()
+    # Este es tu panel de control secreto para ver qué motor encendió
+    st.caption(f"🔧 Motor activo: {motor_elegido.replace('models/', '')}")
 
 # ==========================================
 # CUERPO PRINCIPAL
@@ -109,15 +133,12 @@ if st.button("Analizar con PAI", type="primary"):
     if mensaje_crudo.strip() == "":
         st.warning("El campo está vacío. No podemos analizar el silencio.")
     else:
-        # Mostramos una reflexión local aleatoria mientras procesa
         placeholder_reflexion = st.empty()
         with st.spinner(" "):
             placeholder_reflexion.info(f"✨ **Pausa Activa:**\n{random.choice(reflexiones)}")
             
-            # Acá hacemos UNA sola llamada a la IA (soluciona el error 429 de cuota)
             resultado = analizar_mensaje(mensaje_crudo, destinatario, contexto, emocion_usuario)
             
-            # Borramos la frase de espera una vez que termina
             placeholder_reflexion.empty()
             
             lineas = resultado.split('\n')
@@ -147,10 +168,10 @@ if st.session_state.analisis_actual:
     # REESCRITURA FINAL
     st.divider()
     st.subheader("✍️ Tu Versión Final")
-    st.write("Tomá lo que te sirvió y armá un mensaje con tus palabras. Y vamos a volver a filtrarlo.")
+    st.write("Tomá lo que te sirvió y armá un mensaje con tus palabras. Vamos a validarlo.")
     borrador = st.text_area("Escribí tu borrador final acá:", height=100)
     
-    if st.button("Analizar con PAI nuevamente"):
+    if st.button("Validar mi mensaje"):
         if borrador:
             with st.spinner("Haciendo el último chequeo..."):
                 dev = validar_final(borrador)
