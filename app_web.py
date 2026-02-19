@@ -21,11 +21,31 @@ if "historial" not in st.session_state:
 if "analisis_actual" not in st.session_state:
     st.session_state.analisis_actual = None
 
-# --- CONEXIÓN CON LA IA ---
+# --- CONEXIÓN CON LA IA (RADAR AUTOMÁTICO) ---
 genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 
-# CORRECCIÓN DEL MOTOR: El modelo estable, oficial y 100% gratuito de Google
-model = genai.GenerativeModel("gemini-1.5-flash")
+@st.cache_resource
+def encender_motor():
+    """Escanea la cuenta del usuario y elige un modelo que sí exista y sea gratuito."""
+    try:
+        # Pide la lista de modelos permitidos
+        lista = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
+        
+        # Filtramos el 2.0 que te da límite 0
+        seguros = [m for m in lista if "2.0" not in m]
+        
+        # Priorizamos los de mejor rendimiento vincular
+        for preferido in ["gemini-1.5-flash", "gemini-1.0-pro", "gemini-pro"]:
+            for m in seguros:
+                if preferido in m:
+                    return m
+                    
+        return seguros[0] if seguros else "gemini-1.0-pro"
+    except Exception:
+        return "gemini-1.0-pro"
+
+motor_activo = encender_motor()
+model = genai.GenerativeModel(motor_activo)
 
 # --- FUNCIONES DE CEREBRO ---
 def analizar_mensaje(texto, destinatario, contexto, emocion):
@@ -92,6 +112,10 @@ with st.sidebar:
         **Decepción:** Falla en tus expectativas sobre el otro.<br><br>
         <a href="http://atlasofemotions.org/" target="_blank">👉 Explorar Atlas of Emotions</a>
         """, unsafe_allow_html=True)
+        
+    st.divider()
+    # Indicador para nosotros
+    st.caption(f"🔧 Motor conectado: {motor_activo.replace('models/', '')}")
 
 # ==========================================
 # CUERPO PRINCIPAL
@@ -139,19 +163,15 @@ if st.session_state.analisis_actual:
     
     st.markdown(st.session_state.analisis_actual["texto"])
     
-    # --- CAMBIO 1 ---
     st.info("💡 **Tip:** Copiá la opción que más te guste, reescribila con tus palabras, y volvamos a filtrar el mensaje.")
 
     # REESCRITURA FINAL
     st.divider()
     st.subheader("✍️ Tu Versión Final")
-    
-    # --- CAMBIO 2 ---
     st.write("Filtremos una vez más...")
     
     borrador = st.text_area("Escribí tu borrador final acá:", height=100)
     
-    # --- CAMBIO 3 ---
     if st.button("🟡 Analizar con PAI nuevamente"):
         if borrador:
             with st.spinner("Haciendo el último chequeo..."):
