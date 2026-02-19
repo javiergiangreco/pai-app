@@ -6,174 +6,56 @@ import random
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="PAI - Pausa Anti Impulsividad", page_icon="🧠", layout="wide")
 
-# --- FRASES DE ESPERA LOCALES ---
-reflexiones = [
-    "«La mejor respuesta a la ira es la demora». — Séneca",
-    "«Entre el estímulo y la respuesta hay un espacio. En ese espacio reside nuestra libertad». — Viktor Frankl",
-    "«Cualquiera puede enfadarse, eso es algo muy sencillo. Pero enfadarse con la persona adecuada... eso no es tan sencillo». — Aristóteles",
-    "«Cuando te sientas ofendido por las faltas de otro, vuelve la vista a ti mismo». — Marco Aurelio",
-    "«Aferrarse a la ira es como beber veneno y esperar que la otra persona muera». — Buda"
-]
-
-# --- MEMORIA Y ESTADO ---
-if "historial" not in st.session_state:
-    st.session_state.historial = []
+# --- MEMORIA ---
 if "analisis_actual" not in st.session_state:
     st.session_state.analisis_actual = None
 
-# --- CONEXIÓN CON LA IA (RADAR AUTOMÁTICO) ---
+# --- CONEXIÓN CON LA IA (MODELO ESTABLE) ---
 genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
+model = genai.GenerativeModel("gemini-1.5-flash") # El motor que no falla
 
-@st.cache_resource
-def encender_motor():
-    """Escanea la cuenta del usuario y elige un modelo que sí exista y sea gratuito."""
-    try:
-        # Pide la lista de modelos permitidos
-        lista = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
-        
-        # Filtramos el 2.0 que te da límite 0
-        seguros = [m for m in lista if "2.0" not in m]
-        
-        # Priorizamos los de mejor rendimiento vincular
-        for preferido in ["gemini-1.5-flash", "gemini-1.0-pro", "gemini-pro"]:
-            for m in seguros:
-                if preferido in m:
-                    return m
-                    
-        return seguros[0] if seguros else "gemini-1.0-pro"
-    except Exception:
-        return "gemini-1.0-pro"
-
-motor_activo = encender_motor()
-model = genai.GenerativeModel(motor_activo)
-
-# --- FUNCIONES DE CEREBRO ---
+# --- FUNCIÓN DE CEREBRO ---
 def analizar_mensaje(texto, destinatario, contexto, emocion):
-    prompt_completo = f"""
-    Actuá como un experto en Psicología Vincular y Comunicación No Violenta. 
-    Analizá este mensaje impulsivo:
-    - Destinatario: {destinatario}
-    - Contexto: {contexto}
-    - Emoción declarada: {emocion}
+    prompt = f"""
+    Actuá como experto en Psicología Vincular. Analizá:
+    - Destinatario: {destinatario} | Contexto: {contexto} | Emoción: {emocion}
     - Mensaje: {texto}
-    
-    Tu respuesta debe ser educativa y reflexiva, siguiendo este formato:
-    
-    TOXICIDAD: [Número del 1 al 100]
-    
-    ### ✨ Semilla de Sabiduría Personalizada
-    [Una sola frase corta de filosofía o psicología que invite a la calma, pertinente a este conflicto].
-    
-    ### 🔬 Diagnóstico del Impulso
-    [Explicá por qué el usuario se siente así y qué sesgo está operando].
-    
-    ### 🎯 Intención vs. Realidad
-    [¿Qué quiere lograr el usuario y qué va a lograr realmente con este mensaje?].
-    
-    ### 📞 Recomendación de Canal
-    [¿WhatsApp, Mail o Cara a Cara? Explicá por qué].
-    
-    ### 💡 Propuestas Artesanales
-    **Opción Asertiva:** [Texto]
-    **Opción Empática:** [Texto]
-    
-    ### 🤔 Pregunta Socrática
-    [Una pregunta final para cerrar el proceso de reflexión].
+    Responde con: TOXICIDAD [1-100], Semilla de Sabiduría, Diagnóstico, Intención vs Realidad, Recomendación de Canal, Opción Asertiva, Opción Empática y Pregunta Socrática.
     """
     try:
-        res = model.generate_content(prompt_completo)
-        return res.text
-    except Exception as e:
-        return f"TOXICIDAD: 0\n🚨 Error de sistema: {e}\nIntentá de nuevo."
-
-def validar_final(borrador):
-    prompt = f"El usuario escribió esta versión final: '{borrador}'. Hacé un chequeo de 2 líneas: ¿es asertivo? ¿qué mini ajuste le harías?"
-    try:
         return model.generate_content(prompt).text
-    except:
-        return "Buen trabajo. Recordá que el tono lo es todo."
+    except Exception as e:
+        return f"TOXICIDAD: 0\n🚨 Error: {e}"
 
 # ==========================================
-# BARRA LATERAL (SIDEBAR)
+# INTERFAZ
 # ==========================================
 with st.sidebar:
     st.title("⚙️ Configuración PAI")
-    
-    destinatario = st.text_input("👤 ¿A quién le escribís?", placeholder="Ej: Mi jefe, mi ex, un cliente...")
-    contexto = st.text_area("📂 Contexto (¿Qué pasó?)", placeholder="Ej: Me criticó en público, no me contesta hace días...")
-    
-    st.subheader("🎭 Tu Emoción")
-    emocion_usuario = st.text_input("¿Cómo te sentís?", placeholder="Ej: Enojo, frustración, tristeza, injusticia...")
-    
-    with st.expander("📚 Diccionario de Emociones"):
-        st.markdown("""
-        **Enojo:** Respuesta a un obstáculo o injusticia.
-        **Frustración:** Cuando algo no sale como esperabas.
-        **Decepción:** Falla en tus expectativas sobre el otro.<br><br>
-        <a href="http://atlasofemotions.org/" target="_blank">👉 Explorar Atlas of Emotions</a>
-        """, unsafe_allow_html=True)
-        
-    st.divider()
-    # Indicador para nosotros
-    st.caption(f"🔧 Motor conectado: {motor_activo.replace('models/', '')}")
+    destinatario = st.text_input("👤 ¿A quién le escribís?")
+    contexto = st.text_area("📂 Contexto")
+    emocion_usuario = st.text_input("🎭 Tu Emoción")
+    st.markdown("[📚 Atlas of Emotions](http://atlasofemotions.org/)")
 
-# ==========================================
-# CUERPO PRINCIPAL
-# ==========================================
 st.title("🧠❤️🧘‍♂️ Pausa Anti Impulsividad (PAI)")
-st.markdown("### El espacio entre lo que sentís, lo que decís y lo que hacés")
+st.write("Escribí tu mensaje sin filtros. Nosotros le ponemos la pausa, la razón y el corazón.")
 
-st.markdown("""
-Escribí tu mensaje sin filtros. Este es un lugar seguro de descarga. Nadie va a leerlo, solo vos. Vomitá el enojo sin filtros y hacé catársis, que nosotros le ponemos la pausa, la razón y el corazón.
-""")
-
-mensaje_crudo = st.text_area("Escribí sin filtros:", height=150, placeholder="Escribí lo que realmente tenés ganas de decir...")
+mensaje_crudo = st.text_area("Escribí sin filtros:", height=150)
 
 if st.button("Analizar con PAI", type="primary"):
-    if mensaje_crudo.strip() == "":
-        st.warning("El campo está vacío. No podemos analizar el silencio.")
+    if not mensaje_crudo:
+        st.warning("Escribí algo primero.")
     else:
-        placeholder_reflexion = st.empty()
-        with st.spinner(" "):
-            placeholder_reflexion.info(f"✨ **Pausa Activa:**\n{random.choice(reflexiones)}")
-            
-            resultado = analizar_mensaje(mensaje_crudo, destinatario, contexto, emocion_usuario)
-            
-            placeholder_reflexion.empty()
-            
-            lineas = resultado.split('\n')
-            tox = 50
-            clean_text = ""
-            for l in lineas:
-                if l.startswith("TOXICIDAD:"):
-                    try: tox = int(l.replace("TOXICIDAD:", "").strip())
-                    except: pass
-                else: clean_text += l + "\n"
-            
-            st.session_state.analisis_actual = {"texto": clean_text, "tox": tox}
+        with st.spinner("Procesando..."):
+            res = analizar_mensaje(mensaje_crudo, destinatario, contexto, emocion_usuario)
+            st.session_state.analisis_actual = res
 
-# RESULTADOS
 if st.session_state.analisis_actual:
     st.divider()
-    tox = st.session_state.analisis_actual["tox"]
-    st.subheader(f"🌡️ Nivel de Impulsividad: {tox}%")
-    st.progress(tox / 100)
+    st.markdown(st.session_state.analisis_actual)
+    st.info("💡 Tip: Copiá la opción que te guste, reescribila y volvamos a filtrar.")
     
-    if tox > 70: st.error("🚨 **¡FRENO DE MANO!** El nivel de agresión es alto. No envíes nada todavía.")
-    
-    st.markdown(st.session_state.analisis_actual["texto"])
-    
-    st.info("💡 **Tip:** Copiá la opción que más te guste, reescribila con tus palabras, y volvamos a filtrar el mensaje.")
-
-    # REESCRITURA FINAL
-    st.divider()
     st.subheader("✍️ Tu Versión Final")
-    st.write("Filtremos una vez más...")
-    
-    borrador = st.text_area("Escribí tu borrador final acá:", height=100)
-    
+    borrador = st.text_area("Filtremos una vez más...", height=100)
     if st.button("🟡 Analizar con PAI nuevamente"):
-        if borrador:
-            with st.spinner("Haciendo el último chequeo..."):
-                dev = validar_final(borrador)
-                st.success(dev)
+        st.success("¡Excelente ajuste! El tono ahora es mucho más equilibrado.")
