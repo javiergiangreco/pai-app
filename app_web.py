@@ -23,7 +23,7 @@ if "analisis_actual" not in st.session_state:
 
 # --- CONEXIÓN CON LA IA ---
 genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
-model = genai.GenerativeModel("gemini-1.5-pro")
+model = genai.GenerativeModel("gemini-pro")
 
 # --- FUNCIONES DE CEREBRO (AHORA TODO EN 1 SOLA LLAMADA) ---
 def analizar_mensaje(texto, destinatario, contexto, emocion):
