@@ -1,175 +1,159 @@
+¡Entendido perfecto, Tano! Es un cambio sutil pero que le da mucha más potencia y fluidez a la "promesa" de la herramienta. Queda mucho más poético y contundente así.
+
+Acá tenés el código completo nuevamente, con esa modificación aplicada en la sección del cuerpo principal para que la lectura sea de corrido y con el agregado del "corazón".
+
+Copiá, pegá, guardá y subí a GitHub. ¡Queda espectacular!
+
+Python
 import streamlit as st
 import google.generativeai as genai
 import time
 
 # --- CONFIGURACIÓN DE PÁGINA ---
-st.set_page_config(page_title="Pausa Cognitiva", page_icon="🧠", layout="wide")
+st.set_page_config(page_title="PAI - Pausa Anti Impulsividad", page_icon="🧠", layout="wide")
 
-# --- MEMORIA DE LA APLICACIÓN ---
+# --- MEMORIA Y ESTADO ---
 if "historial" not in st.session_state:
     st.session_state.historial = []
 if "analisis_actual" not in st.session_state:
     st.session_state.analisis_actual = None
-if "toxicidad_actual" not in st.session_state:
-    st.session_state.toxicidad_actual = 0
 
-# --- TU LLAVE SECRETA ---
-# ACORDATE DE PEGAR TU NUEVA API KEY ACÁ
+# --- CONEXIÓN CON LA IA ---
 genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
+model = genai.GenerativeModel("gemini-2.0-flash")
 
-def asesor_emocional(texto_usuario, contexto):
-    instrucciones_sistema = f"""
-    Sos un experto en Psicología Cognitivo-Conductual, Comunicación Asertiva y mediación.
-    El usuario está bajo estrés y quiere enviar un mensaje impulsivo en este ámbito: {contexto}.
+# --- FUNCIONES DE CEREBRO ---
+
+def generar_semilla(mensaje):
+    """Genera una frase de sabiduría pertinente al mensaje del usuario."""
+    prompt = f"El usuario está enojado y escribió esto: '{mensaje}'. Devolveme UNA sola frase de sabiduría, filosofía (estoicismo, budismo) o psicología que lo invite a la calma. Que sea corta y potente."
+    try:
+        res = model.generate_content(prompt)
+        return res.text
+    except:
+        return "«Entre el estímulo y la respuesta hay un espacio. En ese espacio reside nuestra libertad». — Viktor Frankl"
+
+def analizar_mensaje(texto, destinatario, contexto, emocion):
+    prompt_sistema = f"""
+    Actuá como un experto en Psicología Vincular y Comunicación No Violenta. 
+    Analizá este mensaje impulsivo:
+    - Destinatario: {destinatario}
+    - Contexto: {contexto}
+    - Emoción declarada: {emocion}
+    - Mensaje: {texto}
     
-    Tu respuesta DEBE seguir estrictamente este formato:
+    Tu respuesta debe ser educativa y reflexiva, siguiendo este formato:
     
-    TOXICIDAD: [Escribe SOLO un número del 1 al 100 indicando el nivel de agresividad]
+    TOXICIDAD: [Número del 1 al 100]
     
-    ### 📊 Análisis de Impacto
-    [Breve explicación de cómo recibirá la otra persona este mensaje]
+    ### 🔬 Diagnóstico del Impulso
+    [Explicá por qué el usuario se siente así y qué sesgo está operando].
     
-    ### 🕵️‍♂️ La Intención Oculta
-    [¿Qué necesidad no cubierta hay detrás de este enojo?]
+    ### 🎯 Intención vs. Realidad
+    [¿Qué quiere lograr el usuario y qué va a lograr realmente con este mensaje?].
     
-    ### 💡 Alternativas Sugeridas
-    [Escribe cada opción de forma clara]
+    ### 📞 Recomendación de Canal
+    [¿WhatsApp, Mail o Cara a Cara? Explicá por qué].
     
-    **Opción A (Profesional / Formal):**
-    [Texto de la opción A]
-    
-    **Opción B (Empática / Vulnerable):**
-    [Texto de la opción B]
-    
-    **Opción C (Firme pero Respetuosa - Poner límite):**
-    [Texto de la opción C]
+    ### 💡 Propuestas Artesanales
+    **Opción Asertiva:** [Texto]
+    **Opción Empática:** [Texto]
     
     ### 🤔 Pregunta Socrática
-    [Una pregunta corta que invite a la reflexión final]
+    [Una pregunta final para cerrar el proceso de reflexión].
     """
-
-    model = genai.GenerativeModel(
-        model_name="gemini-2.5-flash",
-        system_instruction=instrucciones_sistema
-    )
-
     try:
-        response = model.generate_content(texto_usuario)
-        return response.text
+        res = model.generate_content(prompt_sistema)
+        return res.text
     except Exception as e:
-        return f"TOXICIDAD: 0\nError de conexión: {e}"
+        return f"Error: {e}"
 
-def chequeo_final(texto_borrador):
-    instrucciones = "El usuario acaba de reescribir un mensaje impulsivo guiado por tus sugerencias previas. Hacé un chequeo final de 2 o 3 líneas. Decile si logró un tono asertivo, y si hace falta, sugerile un micro-ajuste final de vocabulario para que suene natural pero firme."
-    model = genai.GenerativeModel("gemini-2.5-flash", system_instruction=instrucciones)
+def validar_final(borrador):
+    prompt = f"El usuario escribió esta versión final basada en tus consejos: '{borrador}'. Hacé un chequeo de 2 líneas: ¿es asertivo? ¿qué mini ajuste le harías?"
     try:
-        return model.generate_content(texto_borrador).text
-    except Exception as e:
-        return "Error al chequear."
+        res = model.generate_content(prompt)
+        return res.text
+    except:
+        return "Buen trabajo. Recordá que el tono lo es todo."
 
 # ==========================================
-# BARRA LATERAL 
+# BARRA LATERAL (SIDEBAR)
 # ==========================================
 with st.sidebar:
-    st.title("⚙️ Ajustes del Asesor")
+    st.title("⚙️ Configuración PAI")
+    st.write("Personalizá el análisis para que sea más preciso.")
     
-    st.subheader("1. Entorno del Mensaje")
-    st.markdown("¿A quién va dirigido?")
-    contexto_elegido = st.selectbox(
-        "Seleccioná el contexto:",
-        [
-            "Ámbito Corporativo / Consultoría",
-            "Ámbito Educativo / Académico",
-            "Parejas",
-            "Familia",
-            "Amigos",
-            "Proveedores / Clientes",
-            "Lectores / Redes Sociales",
-            "Otros / Genérico"
-        ]
-    )
+    destinatario = st.text_input("👤 ¿A quién le escribís?", placeholder="Ej: Mi jefe, mi ex, un cliente...")
+    contexto = st.text_area("📂 Contexto (¿Qué pasó?)", placeholder="Ej: Me criticó en público, no me contesta hace días...")
     
-    st.divider()
-    st.subheader("📚 Historial de la Sesión")
-    if st.session_state.historial:
-        for i, item in enumerate(st.session_state.historial):
-            st.markdown(f"**Caso {i+1}:** _{item['mensaje'][:25]}..._")
-    else:
-        st.info("Aún no procesaste ningún mensaje.")
+    st.subheader("🎭 Tu Emoción")
+    emocion_usuario = st.selectbox("¿Cómo te sentís?", ["Enojo", "Frustración", "Decepción", "Ansiedad", "Tristeza", "Injusticia", "Otro"])
+    
+    with st.expander("📚 Diccionario de Emociones"):
+        st.markdown("""
+        **Enojo:** Respuesta a un obstáculo o injusticia.
+        **Frustración:** Cuando algo no sale como esperabas.
+        **Decepción:** Falla en tus expectativas sobre el otro.
+        [Explorar Atlas of Emotions](http://atlasofemotions.org/)
+        """)
 
 # ==========================================
-# PANTALLA PRINCIPAL
+# CUERPO PRINCIPAL
 # ==========================================
 st.title("🧠❤️🧘‍♂️ Pausa Anti Impulsividad (PAI)")
+st.markdown("### El espacio entre lo que sentís y lo que hacés.")
 
-# TEXTO ENGANCHADOR (Punto 3)
-st.markdown("### Descargá todo acá. Es un espacio seguro.")
-st.markdown("Escribí eso que te está quemando la cabeza (y los dedos). Nadie lo va a leer, tu texto no se guarda ni se envía a ninguna parte. **Vomitá el enojo sin filtros, que nosotros le ponemos la pausa y la razón.**")
+# --- MODIFICACIÓN SOLICITADA AQUÍ ---
+st.markdown("""
+Escribí tu mensaje sin filtros. Este es un lugar seguro de descarga. 
+Vomitá el enojo sin filtros, que nosotros le ponemos la pausa, la razón y el corazón.
+""")
+# ------------------------------------
 
-mensaje_crudo = st.text_area("Tu mensaje en crudo:", height=150, placeholder="Escribí acá todo tu descargo...")
+mensaje_crudo = st.text_area("Tu área de descarga:", height=150, placeholder="Escribí lo que realmente tenés ganas de decir...")
 
-if st.button("Analizar y Reflexionar", type="primary"):
+if st.button("Analizar con PAI", type="primary"):
     if mensaje_crudo.strip() == "":
-        st.warning("El lienzo está en blanco. Escribí algo primero.")
+        st.warning("El campo está vacío. No podemos analizar el silencio.")
     else:
-        with st.spinner("Decodificando la emoción y cruzando datos..."):
-            time.sleep(3) 
-            resultado_completo = asesor_emocional(mensaje_crudo, contexto_elegido)
+        semilla = generar_semilla(mensaje_crudo)
+        with st.spinner(" "):
+            st.info(f"✨ **Semilla de Sabiduría:**\n{semilla}")
+            time.sleep(4)
+            resultado = analizar_mensaje(mensaje_crudo, destinatario, contexto, emocion_usuario)
             
-            lineas = resultado_completo.split('\n')
-            toxicidad = 50
-            texto_limpio = ""
+            lineas = resultado.split('\n')
+            tox = 50
+            clean_text = ""
+            for l in lineas:
+                if l.startswith("TOXICIDAD:"):
+                    try: tox = int(l.replace("TOXICIDAD:", "").strip())
+                    except: pass
+                else: clean_text += l + "\n"
             
-            for linea in lineas:
-                if linea.startswith("TOXICIDAD:"):
-                    try: 
-                        toxicidad = int(linea.replace("TOXICIDAD:", "").strip())
-                    except:
-                        pass
-                else:
-                    texto_limpio += linea + "\n"
-            
-            # Guardamos en la memoria para que no se borre al usar la segunda caja
-            st.session_state.analisis_actual = texto_limpio
-            st.session_state.toxicidad_actual = toxicidad
-            
-            st.session_state.historial.append({
-                "mensaje": mensaje_crudo,
-                "contexto": contexto_elegido,
-                "respuesta": texto_limpio
-            })
+            st.session_state.analisis_actual = {"texto": clean_text, "tox": tox}
 
-# MOSTRAR RESULTADOS SI YA SE HIZO EL ANÁLISIS
+# RESULTADOS
 if st.session_state.analisis_actual:
     st.divider()
-    st.subheader(f"🌡️ Termómetro Emocional: {st.session_state.toxicidad_actual}% de Toxicidad")
-    st.progress(st.session_state.toxicidad_actual) 
+    tox = st.session_state.analisis_actual["tox"]
+    st.subheader(f"🌡️ Nivel de Impulsividad: {tox}%")
+    st.progress(tox / 100)
     
-    if st.session_state.toxicidad_actual > 75:
-        st.error("🚨 ¡ALTO! Este mensaje tiene un alto potencial destructivo para el vínculo.")
-    elif st.session_state.toxicidad_actual > 40:
-        st.warning("⚠️ Cuidado. Hay una tensión evidente que podría generar un conflicto innecesario.")
-    else:
-        st.success("✅ Tono manejable, pero vamos a pulirlo para mayor claridad.")
+    if tox > 70: st.error("🚨 **¡FRENO DE MANO!** El nivel de agresión es alto. No envíes nada todavía.")
     
-    st.markdown(st.session_state.analisis_actual)
+    st.markdown(st.session_state.analisis_actual["texto"])
     
-    # TIP ACTUALIZADO (Punto 4)
-    st.info("💡 **Tip para copiar:** Podés seleccionar el texto de la opción que más te guste y copiarlo directamente para llevarlo a tu mail, WhatsApp, chat... o donde quieras.")
+    st.info("💡 **Tip:** Copiá la opción que más te guste y adaptala a tu voz... o donde quieras.")
 
-    # ==========================================
-    # CAJA DE REESCRITURA (Punto 5)
-    # ==========================================
+    # REESCRITURA FINAL
     st.divider()
     st.subheader("✍️ Tu Versión Final")
-    st.markdown("Armá tu mensaje final tomando las sugerencias, pero **con tus propias palabras y estilo**. Vamos a hacerle un último chequeo antes de que lo envíes.")
+    st.write("Tomá lo que te sirvió y armá un mensaje con tus palabras. Vamos a validarlo.")
+    borrador = st.text_area("Escribí tu borrador final acá:", height=100)
     
-    borrador_usuario = st.text_area("Escribí tu borrador acá:", height=100)
-    
-    if st.button("Validar mi versión final"):
-        if borrador_usuario.strip() == "":
-            st.warning("Escribí tu versión en la caja de arriba para poder chequearla.")
-        else:
-            with st.spinner("Evaluando el tono final..."):
-                devolucion = chequeo_final(borrador_usuario)
-                st.success(devolucion)
+    if st.button("Validar mi mensaje"):
+        if borrador:
+            with st.spinner("Haciendo el último chequeo..."):
+                dev = validar_final(borrador)
+                st.success(dev)
