@@ -23,7 +23,7 @@ if "analisis_actual" not in st.session_state:
 
 # --- CONEXIÓN CON LA IA ---
 genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
-model = genai.GenerativeModel("gemini-2.0-flash")
+model = genai.GenerativeModel("gemini-1.5-pro")
 
 # --- FUNCIONES DE CEREBRO (AHORA TODO EN 1 SOLA LLAMADA) ---
 def analizar_mensaje(texto, destinatario, contexto, emocion):
@@ -147,10 +147,10 @@ if st.session_state.analisis_actual:
     # REESCRITURA FINAL
     st.divider()
     st.subheader("✍️ Tu Versión Final")
-    st.write("Tomá lo que te sirvió y armá un mensaje con tus palabras. Vamos a validarlo.")
+    st.write("Tomá lo que te sirvió y armá un mensaje con tus palabras. Y vamos a volver a filtrarlo.")
     borrador = st.text_area("Escribí tu borrador final acá:", height=100)
     
-    if st.button("Validar mi mensaje"):
+    if st.button("Analizar con PAI nuevamente"):
         if borrador:
             with st.spinner("Haciendo el último chequeo..."):
                 dev = validar_final(borrador)
