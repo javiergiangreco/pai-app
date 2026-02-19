@@ -80,30 +80,30 @@ with st.sidebar:
     contexto = st.text_area("📂 Contexto (¿Qué pasó?)", placeholder="Ej: Me criticó en público, no me contesta hace días...")
     
     st.subheader("🎭 Tu Emoción")
-    emocion_usuario = st.selectbox("¿Cómo te sentís?", ["Enojo", "Frustración", "Decepción", "Ansiedad", "Tristeza", "Injusticia", "Otro"])
+    # --- CAMBIO A CAMPO DE TEXTO LIBRE ---
+    emocion_usuario = st.text_input("¿Cómo te sentís?", placeholder="Ej: Enojo, frustración, tristeza, injusticia...")
     
     with st.expander("📚 Diccionario de Emociones"):
+        # --- CAMBIO A ENLACE EN NUEVA PESTAÑA ---
         st.markdown("""
         **Enojo:** Respuesta a un obstáculo o injusticia.
         **Frustración:** Cuando algo no sale como esperabas.
-        **Decepción:** Falla en tus expectativas sobre el otro.
-        [Explorar Atlas of Emotions](http://atlasofemotions.org/)
-        """)
+        **Decepción:** Falla en tus expectativas sobre el otro.<br><br>
+        <a href="http://atlasofemotions.org/" target="_blank">👉 Explorar Atlas of Emotions</a>
+        """, unsafe_allow_html=True)
 
 # ==========================================
 # CUERPO PRINCIPAL
 # ==========================================
+# --- TEXTOS EXACTOS SOLICITADOS ---
 st.title("🧠❤️🧘‍♂️ Pausa Anti Impulsividad (PAI)")
-st.markdown("### El espacio entre lo que sentís y lo que hacés.")
+st.markdown("### El espacio entre lo que sentís, lo que decís y lo que hacés")
 
-# --- MODIFICACIÓN SOLICITADA AQUÍ ---
 st.markdown("""
-Escribí tu mensaje sin filtros. Este es un lugar seguro de descarga. 
-Vomitá el enojo sin filtros, que nosotros le ponemos la pausa, la razón y el corazón.
+Escribí tu mensaje sin filtros. Este es un lugar seguro de descarga. Nadie va a leerlo, solo vos. Vomitá el enojo sin filtros y hacé catársis, que nosotros le ponemos la pausa, la razón y el corazón.
 """)
-# ------------------------------------
 
-mensaje_crudo = st.text_area("Tu área de descarga:", height=150, placeholder="Escribí lo que realmente tenés ganas de decir...")
+mensaje_crudo = st.text_area("Escribí sin filtros:", height=150, placeholder="Escribí lo que realmente tenés ganas de decir...")
 
 if st.button("Analizar con PAI", type="primary"):
     if mensaje_crudo.strip() == "":
