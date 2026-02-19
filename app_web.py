@@ -1,10 +1,3 @@
-¡Entendido perfecto, Tano! Es un cambio sutil pero que le da mucha más potencia y fluidez a la "promesa" de la herramienta. Queda mucho más poético y contundente así.
-
-Acá tenés el código completo nuevamente, con esa modificación aplicada en la sección del cuerpo principal para que la lectura sea de corrido y con el agregado del "corazón".
-
-Copiá, pegá, guardá y subí a GitHub. ¡Queda espectacular!
-
-Python
 import streamlit as st
 import google.generativeai as genai
 import time
