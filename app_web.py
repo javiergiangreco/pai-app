@@ -21,31 +21,11 @@ if "historial" not in st.session_state:
 if "analisis_actual" not in st.session_state:
     st.session_state.analisis_actual = None
 
-# --- CONEXIÓN CON LA IA (SISTEMA ANTI-FALLOS) ---
+# --- CONEXIÓN CON LA IA ---
 genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 
-@st.cache_resource
-def obtener_mejor_modelo():
-    """Escanea la API Key y elige el mejor modelo disponible que no esté bloqueado."""
-    try:
-        # Pide a Google la lista de modelos permitidos para tu llave
-        modelos_permitidos = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
-        
-        # Filtramos explícitamente la familia 2.0 que te está dando cuota cero
-        modelos_seguros = [m for m in modelos_permitidos if "2.0" not in m]
-        
-        # Buscamos en orden de prioridad y estabilidad
-        for preferido in ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-pro"]:
-            for m in modelos_seguros:
-                if preferido in m:
-                    return m
-                    
-        return modelos_seguros[0] if modelos_seguros else "gemini-1.5-flash"
-    except:
-        return "gemini-1.5-flash"
-
-motor_elegido = obtener_mejor_modelo()
-model = genai.GenerativeModel(motor_elegido)
+# CORRECCIÓN DEL MOTOR: El modelo estable, oficial y 100% gratuito de Google
+model = genai.GenerativeModel("gemini-1.5-flash")
 
 # --- FUNCIONES DE CEREBRO ---
 def analizar_mensaje(texto, destinatario, contexto, emocion):
@@ -112,10 +92,6 @@ with st.sidebar:
         **Decepción:** Falla en tus expectativas sobre el otro.<br><br>
         <a href="http://atlasofemotions.org/" target="_blank">👉 Explorar Atlas of Emotions</a>
         """, unsafe_allow_html=True)
-        
-    st.divider()
-    # Este es tu panel de control secreto para ver qué motor encendió
-    st.caption(f"🔧 Motor activo: {motor_elegido.replace('models/', '')}")
 
 # ==========================================
 # CUERPO PRINCIPAL
@@ -163,15 +139,20 @@ if st.session_state.analisis_actual:
     
     st.markdown(st.session_state.analisis_actual["texto"])
     
-    st.info("💡 **Tip:** Copiá la opción que más te guste y adaptala a tu voz... o donde quieras.")
+    # --- CAMBIO 1 ---
+    st.info("💡 **Tip:** Copiá la opción que más te guste, reescribila con tus palabras, y volvamos a filtrar el mensaje.")
 
     # REESCRITURA FINAL
     st.divider()
     st.subheader("✍️ Tu Versión Final")
-    st.write("Tomá lo que te sirvió y armá un mensaje con tus palabras. Vamos a validarlo.")
+    
+    # --- CAMBIO 2 ---
+    st.write("Filtremos una vez más...")
+    
     borrador = st.text_area("Escribí tu borrador final acá:", height=100)
     
-    if st.button("Validar mi mensaje"):
+    # --- CAMBIO 3 ---
+    if st.button("🟡 Analizar con PAI nuevamente"):
         if borrador:
             with st.spinner("Haciendo el último chequeo..."):
                 dev = validar_final(borrador)
