@@ -1,9 +1,19 @@
 import streamlit as st
 import google.generativeai as genai
 import time
+import random
 
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="PAI - Pausa Anti Impulsividad", page_icon="🧠", layout="wide")
+
+# --- FRASES DE ESPERA LOCALES (Costo cero de cuota) ---
+reflexiones = [
+    "«La mejor respuesta a la ira es la demora». — Séneca",
+    "«Entre el estímulo y la respuesta hay un espacio. En ese espacio reside nuestra libertad». — Viktor Frankl",
+    "«Cualquiera puede enfadarse, eso es algo muy sencillo. Pero enfadarse con la persona adecuada... eso no es tan sencillo». — Aristóteles",
+    "«Cuando te sientas ofendido por las faltas de otro, vuelve la vista a ti mismo». — Marco Aurelio",
+    "«Aferrarse a la ira es como beber veneno y esperar que la otra persona muera». — Buda"
+]
 
 # --- MEMORIA Y ESTADO ---
 if "historial" not in st.session_state:
@@ -13,19 +23,9 @@ if "analisis_actual" not in st.session_state:
 
 # --- CONEXIÓN CON LA IA ---
 genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
-model = genai.GenerativeModel("gemini-1.5-flash")
+model = genai.GenerativeModel("gemini-2.0-flash")
 
-# --- FUNCIONES DE CEREBRO ---
-
-def generar_semilla(mensaje):
-    """Genera una frase de sabiduría pertinente al mensaje del usuario."""
-    prompt = f"El usuario está enojado y escribió esto: '{mensaje}'. Devolveme UNA sola frase de sabiduría, filosofía (estoicismo, budismo) o psicología que lo invite a la calma. Que sea corta y potente."
-    try:
-        res = model.generate_content(prompt)
-        return res.text
-    except:
-        return "«Entre el estímulo y la respuesta hay un espacio. En ese espacio reside nuestra libertad». — Viktor Frankl"
-
+# --- FUNCIONES DE CEREBRO (AHORA TODO EN 1 SOLA LLAMADA) ---
 def analizar_mensaje(texto, destinatario, contexto, emocion):
     prompt_sistema = f"""
     Actuá como un experto en Psicología Vincular y Comunicación No Violenta. 
@@ -38,6 +38,9 @@ def analizar_mensaje(texto, destinatario, contexto, emocion):
     Tu respuesta debe ser educativa y reflexiva, siguiendo este formato:
     
     TOXICIDAD: [Número del 1 al 100]
+    
+    ### ✨ Semilla de Sabiduría Personalizada
+    [Una sola frase corta de filosofía o psicología que invite a la calma, pertinente a este conflicto].
     
     ### 🔬 Diagnóstico del Impulso
     [Explicá por qué el usuario se siente así y qué sesgo está operando].
@@ -80,11 +83,9 @@ with st.sidebar:
     contexto = st.text_area("📂 Contexto (¿Qué pasó?)", placeholder="Ej: Me criticó en público, no me contesta hace días...")
     
     st.subheader("🎭 Tu Emoción")
-    # --- CAMBIO A CAMPO DE TEXTO LIBRE ---
     emocion_usuario = st.text_input("¿Cómo te sentís?", placeholder="Ej: Enojo, frustración, tristeza, injusticia...")
     
     with st.expander("📚 Diccionario de Emociones"):
-        # --- CAMBIO A ENLACE EN NUEVA PESTAÑA ---
         st.markdown("""
         **Enojo:** Respuesta a un obstáculo o injusticia.
         **Frustración:** Cuando algo no sale como esperabas.
@@ -95,7 +96,6 @@ with st.sidebar:
 # ==========================================
 # CUERPO PRINCIPAL
 # ==========================================
-# --- TEXTOS EXACTOS SOLICITADOS ---
 st.title("🧠❤️🧘‍♂️ Pausa Anti Impulsividad (PAI)")
 st.markdown("### El espacio entre lo que sentís, lo que decís y lo que hacés")
 
@@ -109,11 +109,16 @@ if st.button("Analizar con PAI", type="primary"):
     if mensaje_crudo.strip() == "":
         st.warning("El campo está vacío. No podemos analizar el silencio.")
     else:
-        semilla = generar_semilla(mensaje_crudo)
+        # Mostramos una reflexión local aleatoria mientras procesa
+        placeholder_reflexion = st.empty()
         with st.spinner(" "):
-            st.info(f"✨ **Semilla de Sabiduría:**\n{semilla}")
-            time.sleep(4)
+            placeholder_reflexion.info(f"✨ **Pausa Activa:**\n{random.choice(reflexiones)}")
+            
+            # Acá hacemos UNA sola llamada a la IA (soluciona el error 429 de cuota)
             resultado = analizar_mensaje(mensaje_crudo, destinatario, contexto, emocion_usuario)
+            
+            # Borramos la frase de espera una vez que termina
+            placeholder_reflexion.empty()
             
             lineas = resultado.split('\n')
             tox = 50
@@ -137,7 +142,7 @@ if st.session_state.analisis_actual:
     
     st.markdown(st.session_state.analisis_actual["texto"])
     
-    st.info("💡 **Tip:** Copiá la opción que más te guste, adaptala a tu voz y tu estilo, y volvemos a filtrarla.")
+    st.info("💡 **Tip:** Copiá la opción que más te guste y adaptala a tu voz... o donde quieras.")
 
     # REESCRITURA FINAL
     st.divider()
