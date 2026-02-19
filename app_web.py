@@ -13,7 +13,7 @@ if "analisis_actual" not in st.session_state:
 
 # --- CONEXIÓN CON LA IA ---
 genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
-model = genai.GenerativeModel("gemini-2.0-flash")
+model = genai.GenerativeModel("gemini-1.5-flash")
 
 # --- FUNCIONES DE CEREBRO ---
 
@@ -137,7 +137,7 @@ if st.session_state.analisis_actual:
     
     st.markdown(st.session_state.analisis_actual["texto"])
     
-    st.info("💡 **Tip:** Copiá la opción que más te guste y adaptala a tu voz... o donde quieras.")
+    st.info("💡 **Tip:** Copiá la opción que más te guste, adaptala a tu voz y tu estilo, y volvemos a filtrarla.")
 
     # REESCRITURA FINAL
     st.divider()
