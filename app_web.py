@@ -21,31 +21,9 @@ if "historial" not in st.session_state:
 if "analisis_actual" not in st.session_state:
     st.session_state.analisis_actual = None
 
-# --- CONEXIÓN CON LA IA (RADAR AUTOMÁTICO) ---
+# --- CONEXIÓN CON LA IA (DIRECTA Y SIN RADARES) ---
 genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
-
-@st.cache_resource
-def encender_motor():
-    """Escanea la cuenta del usuario y elige un modelo que sí exista y sea gratuito."""
-    try:
-        # Pide la lista de modelos permitidos
-        lista = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
-        
-        # Filtramos el 2.0 que te da límite 0
-        seguros = [m for m in lista if "2.0" not in m]
-        
-        # Priorizamos los de mejor rendimiento vincular
-        for preferido in ["gemini-1.5-flash", "gemini-1.0-pro", "gemini-pro"]:
-            for m in seguros:
-                if preferido in m:
-                    return m
-                    
-        return seguros[0] if seguros else "gemini-1.0-pro"
-    except Exception:
-        return "gemini-1.0-pro"
-
-motor_activo = encender_motor()
-model = genai.GenerativeModel(motor_activo)
+model = genai.GenerativeModel("gemini-1.5-flash")
 
 # --- FUNCIONES DE CEREBRO ---
 def analizar_mensaje(texto, destinatario, contexto, emocion):
@@ -114,8 +92,7 @@ with st.sidebar:
         """, unsafe_allow_html=True)
         
     st.divider()
-    # Indicador para nosotros
-    st.caption(f"🔧 Motor conectado: {motor_activo.replace('models/', '')}")
+    st.caption("🔧 Motor conectado: gemini-1.5-flash")
 
 # ==========================================
 # CUERPO PRINCIPAL
