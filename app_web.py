@@ -49,12 +49,13 @@ with st.sidebar:
     st.divider()
     st.subheader("🛠️ Panel de Diagnóstico")
     st.write("Elegí el motor a usar:")
-    # Acá está la magia: un desplegable con tus motores reales
     motor_seleccionado = st.selectbox("Motores disponibles:", modelos_disponibles)
 
 # --- FUNCIONES DE CEREBRO ---
 def analizar_mensaje(texto, destinatario, contexto, emocion, motor):
     model = genai.GenerativeModel(motor)
+    
+    # AGREGAMOS UNA INSTRUCCIÓN ESTRICTA PARA EVITAR CHARLAS INNECESARIAS
     prompt_completo = f"""
     Actuá como un experto en Psicología Vincular y Comunicación No Violenta. 
     Analizá este mensaje impulsivo:
@@ -63,7 +64,10 @@ def analizar_mensaje(texto, destinatario, contexto, emocion, motor):
     - Emoción declarada: {emocion}
     - Mensaje: {texto}
     
-    Tu respuesta debe ser educativa y reflexiva, siguiendo este formato:
+    INSTRUCCIÓN ESTRICTA: No escribas NINGUNA introducción amable ni saludos. 
+    Tu respuesta debe empezar directamente con la línea de TOXICIDAD.
+    
+    Sigue exactamente este formato:
     
     TOXICIDAD: [Número del 1 al 100]
     
@@ -123,12 +127,17 @@ if st.button("Analizar con PAI", type="primary"):
             tox = 50
             clean_text = ""
             for l in lineas:
-                if l.startswith("TOXICIDAD:"):
-                    try: tox = int(l.replace("TOXICIDAD:", "").strip())
+                # LECTOR MEJORADO A PRUEBA DE BALAS
+                if "TOXICIDAD" in l.upper():
+                    try: 
+                        # Extrae solo los números, no importa qué más haya en la línea
+                        tox = int(''.join(filter(str.isdigit, l)))
+                        if tox > 100: tox = 100 # Tope visual
                     except: pass
-                else: clean_text += l + "\n"
+                else: 
+                    clean_text += l + "\n"
             
-            st.session_state.analisis_actual = {"texto": clean_text, "tox": tox}
+            st.session_state.analisis_actual = {"texto": clean_text.strip(), "tox": tox}
 
 # RESULTADOS
 if st.session_state.analisis_actual:
