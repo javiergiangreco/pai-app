@@ -6,27 +6,55 @@ import random
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="PAI - Pausa Anti Impulsividad", page_icon="🧠", layout="wide")
 
-# --- FRASES DE ESPERA LOCALES ---
-reflexiones = [
-    "«La mejor respuesta a la ira es la demora». — Séneca",
-    "«Entre el estímulo y la respuesta hay un espacio. En ese espacio reside nuestra libertad». — Viktor Frankl",
-    "«Cualquiera puede enfadarse, eso es algo muy sencillo. Pero enfadarse con la persona adecuada... eso no es tan sencillo». — Aristóteles",
-    "«Cuando te sientas ofendido por las faltas de otro, vuelve la vista a ti mismo». — Marco Aurelio",
-    "«Aferrarse a la ira es como beber veneno y esperar que la otra persona muera». — Buda"
-]
-
 # --- MEMORIA Y ESTADO ---
 if "historial" not in st.session_state:
     st.session_state.historial = []
 if "analisis_actual" not in st.session_state:
     st.session_state.analisis_actual = None
 
-# --- CONEXIÓN CON LA IA (DIRECTA Y SIN RADARES) ---
+# --- CONEXIÓN CON LA IA ---
 genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
-model = genai.GenerativeModel("gemini-1.5-flash")
+
+@st.cache_resource
+def obtener_lista_modelos():
+    """Lee exactamente qué modelos están disponibles en tu cuenta de Google."""
+    try:
+        modelos = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
+        return modelos if modelos else ["No se encontraron modelos"]
+    except Exception as e:
+        return [f"Error de lectura: {e}"]
+
+modelos_disponibles = obtener_lista_modelos()
+
+# ==========================================
+# BARRA LATERAL (SIDEBAR)
+# ==========================================
+with st.sidebar:
+    st.title("⚙️ Configuración PAI")
+    
+    destinatario = st.text_input("👤 ¿A quién le escribís?", placeholder="Ej: Mi jefe, mi ex, un cliente...")
+    contexto = st.text_area("📂 Contexto (¿Qué pasó?)", placeholder="Ej: Me criticó en público, no me contesta hace días...")
+    
+    st.subheader("🎭 Tu Emoción")
+    emocion_usuario = st.text_input("¿Cómo te sentís?", placeholder="Ej: Enojo, frustración, tristeza, injusticia...")
+    
+    with st.expander("📚 Diccionario de Emociones"):
+        st.markdown("""
+        **Enojo:** Respuesta a un obstáculo o injusticia.
+        **Frustración:** Cuando algo no sale como esperabas.
+        **Decepción:** Falla en tus expectativas sobre el otro.<br><br>
+        <a href="http://atlasofemotions.org/" target="_blank">👉 Explorar Atlas of Emotions</a>
+        """, unsafe_allow_html=True)
+        
+    st.divider()
+    st.subheader("🛠️ Panel de Diagnóstico")
+    st.write("Elegí el motor a usar:")
+    # Acá está la magia: un desplegable con tus motores reales
+    motor_seleccionado = st.selectbox("Motores disponibles:", modelos_disponibles)
 
 # --- FUNCIONES DE CEREBRO ---
-def analizar_mensaje(texto, destinatario, contexto, emocion):
+def analizar_mensaje(texto, destinatario, contexto, emocion, motor):
+    model = genai.GenerativeModel(motor)
     prompt_completo = f"""
     Actuá como un experto en Psicología Vincular y Comunicación No Violenta. 
     Analizá este mensaje impulsivo:
@@ -62,37 +90,15 @@ def analizar_mensaje(texto, destinatario, contexto, emocion):
         res = model.generate_content(prompt_completo)
         return res.text
     except Exception as e:
-        return f"TOXICIDAD: 0\n🚨 Error de sistema: {e}\nIntentá de nuevo."
+        return f"TOXICIDAD: 0\n🚨 Error de sistema con el motor {motor}:\n{e}\n\n👉 Por favor, elegí otro motor en la barra lateral e intentá de nuevo."
 
-def validar_final(borrador):
+def validar_final(borrador, motor):
+    model = genai.GenerativeModel(motor)
     prompt = f"El usuario escribió esta versión final: '{borrador}'. Hacé un chequeo de 2 líneas: ¿es asertivo? ¿qué mini ajuste le harías?"
     try:
         return model.generate_content(prompt).text
     except:
         return "Buen trabajo. Recordá que el tono lo es todo."
-
-# ==========================================
-# BARRA LATERAL (SIDEBAR)
-# ==========================================
-with st.sidebar:
-    st.title("⚙️ Configuración PAI")
-    
-    destinatario = st.text_input("👤 ¿A quién le escribís?", placeholder="Ej: Mi jefe, mi ex, un cliente...")
-    contexto = st.text_area("📂 Contexto (¿Qué pasó?)", placeholder="Ej: Me criticó en público, no me contesta hace días...")
-    
-    st.subheader("🎭 Tu Emoción")
-    emocion_usuario = st.text_input("¿Cómo te sentís?", placeholder="Ej: Enojo, frustración, tristeza, injusticia...")
-    
-    with st.expander("📚 Diccionario de Emociones"):
-        st.markdown("""
-        **Enojo:** Respuesta a un obstáculo o injusticia.
-        **Frustración:** Cuando algo no sale como esperabas.
-        **Decepción:** Falla en tus expectativas sobre el otro.<br><br>
-        <a href="http://atlasofemotions.org/" target="_blank">👉 Explorar Atlas of Emotions</a>
-        """, unsafe_allow_html=True)
-        
-    st.divider()
-    st.caption("🔧 Motor conectado: gemini-1.5-flash")
 
 # ==========================================
 # CUERPO PRINCIPAL
@@ -110,13 +116,8 @@ if st.button("Analizar con PAI", type="primary"):
     if mensaje_crudo.strip() == "":
         st.warning("El campo está vacío. No podemos analizar el silencio.")
     else:
-        placeholder_reflexion = st.empty()
-        with st.spinner(" "):
-            placeholder_reflexion.info(f"✨ **Pausa Activa:**\n{random.choice(reflexiones)}")
-            
-            resultado = analizar_mensaje(mensaje_crudo, destinatario, contexto, emocion_usuario)
-            
-            placeholder_reflexion.empty()
+        with st.spinner("Analizando con el motor seleccionado..."):
+            resultado = analizar_mensaje(mensaje_crudo, destinatario, contexto, emocion_usuario, motor_seleccionado)
             
             lineas = resultado.split('\n')
             tox = 50
@@ -152,5 +153,5 @@ if st.session_state.analisis_actual:
     if st.button("🟡 Analizar con PAI nuevamente"):
         if borrador:
             with st.spinner("Haciendo el último chequeo..."):
-                dev = validar_final(borrador)
+                dev = validar_final(borrador, motor_seleccionado)
                 st.success(dev)
