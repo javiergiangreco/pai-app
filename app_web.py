@@ -1,6 +1,6 @@
 import streamlit as st
 import google.generativeai as genai
-import re  # Sumamos esta herramienta para extraer números sin errores
+import re
 
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="PAI - Pausa Anti Impulsividad", page_icon="🧠", layout="wide")
@@ -22,7 +22,7 @@ PERSONALIDADES = {
     "Modo Amigo de Fierro (Directo)": "Actuá como un amigo honesto de Buenos Aires. Hablá de 'vos', con tono cercano pero firme ('Che, bajá un cambio')."
 }
 
-# --- FUNCIÓN DE CEREBRO ---
+# --- FUNCIONES DE CEREBRO ---
 def analizar_mensaje(texto, destinatario, contexto, emocion, modo):
     instruccion_modo = PERSONALIDADES[modo]
     prompt_completo = f"""
@@ -32,7 +32,7 @@ def analizar_mensaje(texto, destinatario, contexto, emocion, modo):
     - Mensaje: {texto}
     
     INSTRUCCIÓN ESTRICTA: No escribas introducciones, ni saludos.
-    El valor de TOXICIDAD debe ser ÚNICAMENTE un número del 1 al 100 (sin el símbolo %, sin /100).
+    El valor de TOXICIDAD debe ser ÚNICAMENTE un número del 1 al 100.
     
     Respeta este formato exacto:
     TOXICIDAD: [Número del 1 al 100]
@@ -53,8 +53,20 @@ def analizar_mensaje(texto, destinatario, contexto, emocion, modo):
     except Exception as e:
         return f"TOXICIDAD: 0\n🚨 Error: {e}"
 
+def validar_final(borrador, modo):
+    instruccion_modo = PERSONALIDADES[modo]
+    prompt = f"""
+    {instruccion_modo}
+    El usuario reescribió su mensaje original con esta versión final: '{borrador}'. 
+    Hacé un chequeo breve (2 o 3 líneas máximo): ¿Logró bajar la toxicidad y aplicar una buena comunicación? ¿Qué mini ajuste le harías antes de que apriete 'Enviar'?
+    """
+    try:
+        return model.generate_content(prompt).text
+    except:
+        return "Buen trabajo. Recordá que el tono lo es todo."
+
 # ==========================================
-# CUERPO PRINCIPAL (DISEÑO LIMPIO)
+# CUERPO PRINCIPAL
 # ==========================================
 
 # Fila 1: Título y Sello de Seguridad
@@ -95,11 +107,10 @@ if st.button("Analizar con PAI", type="primary"):
             for l in lineas:
                 if "TOXICIDAD" in l.upper():
                     try: 
-                        # Magia de Regex: Pesca el primer número real de la oración
                         match = re.search(r'\d+', l)
                         if match:
                             tox = int(match.group())
-                            if tox > 100: tox = 100 # Tope visual inquebrantable
+                            if tox > 100: tox = 100
                     except: pass
                 else: 
                     clean_text += l + "\n"
@@ -117,6 +128,23 @@ if st.session_state.analisis_actual:
     
     st.markdown(st.session_state.analisis_actual["texto"])
     
+    st.info("💡 **Tip:** Copiá la opción que más te guste, reescribila con tus palabras, y volvamos a filtrar el mensaje.")
+
+    # --- EL ESPACIO EDUCATIVO (RESTAURADO Y MEJORADO) ---
+    st.divider()
+    st.subheader("✍️ Tu Versión Final")
+    st.write("Masticá el consejo y reescribí el mensaje a tu manera para un último chequeo.")
+    
+    borrador = st.text_area("Escribí tu borrador final acá:", height=100)
+    
+    if st.button("🟡 Analizar con PAI nuevamente"):
+        if borrador.strip():
+            with st.spinner(f"Haciendo el último chequeo ({modo_conciencia})..."):
+                dev = validar_final(borrador, modo_conciencia)
+                st.success(dev)
+        else:
+            st.warning("Escribí tu versión final en la caja de arriba para poder revisarla.")
+
     st.divider()
     if st.button("🔄 Nueva Pausa"):
         st.session_state.analisis_actual = None
