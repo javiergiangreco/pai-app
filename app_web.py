@@ -3,7 +3,7 @@ import google.generativeai as genai
 import re
 
 # --- CONFIGURACIÓN DE PÁGINA ---
-st.set_page_config(page_title="PAI - Pausa Anti Impulsividad", page_icon="🧠", layout="wide")
+st.set_page_config(page_title="PAI - Pausa Anti Impulsividad", page_icon="🧠 ❤️ 🧘‍♂️", layout="wide")
 
 # --- MEMORIA Y ESTADO ---
 if "analisis_actual" not in st.session_state:
