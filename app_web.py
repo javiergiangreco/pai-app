@@ -55,7 +55,6 @@ with st.sidebar:
 def analizar_mensaje(texto, destinatario, contexto, emocion, motor):
     model = genai.GenerativeModel(motor)
     
-    # AGREGAMOS UNA INSTRUCCIÓN ESTRICTA PARA EVITAR CHARLAS INNECESARIAS
     prompt_completo = f"""
     Actuá como un experto en Psicología Vincular y Comunicación No Violenta. 
     Analizá este mensaje impulsivo:
@@ -110,6 +109,9 @@ def validar_final(borrador, motor):
 st.title("🧠❤️🧘‍♂️ Pausa Anti Impulsividad (PAI)")
 st.markdown("### El espacio entre lo que sentís, lo que decís y lo que hacés")
 
+# --- AVISO CLAVE PARA CELULARES ---
+st.info("📱 **¿Estás en el celular?** Tocá la flechita **`>`** arriba a la izquierda para configurar a quién le escribís y qué sentís antes de analizar.")
+
 st.markdown("""
 Escribí tu mensaje sin filtros. Este es un lugar seguro de descarga. Nadie va a leerlo, solo vos. Vomitá el enojo sin filtros y hacé catársis, que nosotros le ponemos la pausa, la razón y el corazón.
 """)
@@ -127,12 +129,10 @@ if st.button("Analizar con PAI", type="primary"):
             tox = 50
             clean_text = ""
             for l in lineas:
-                # LECTOR MEJORADO A PRUEBA DE BALAS
                 if "TOXICIDAD" in l.upper():
                     try: 
-                        # Extrae solo los números, no importa qué más haya en la línea
                         tox = int(''.join(filter(str.isdigit, l)))
-                        if tox > 100: tox = 100 # Tope visual
+                        if tox > 100: tox = 100
                     except: pass
                 else: 
                     clean_text += l + "\n"
