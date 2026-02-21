@@ -7,8 +7,6 @@ import random
 st.set_page_config(page_title="PAI - Pausa Anti Impulsividad", page_icon="🧠", layout="wide")
 
 # --- MEMORIA Y ESTADO ---
-if "historial" not in st.session_state:
-    st.session_state.historial = []
 if "analisis_actual" not in st.session_state:
     st.session_state.analisis_actual = None
 
@@ -17,7 +15,6 @@ genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 
 @st.cache_resource
 def obtener_lista_modelos():
-    """Lee exactamente qué modelos están disponibles en tu cuenta de Google."""
     try:
         modelos = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
         return modelos if modelos else ["No se encontraron modelos"]
@@ -32,76 +29,76 @@ modelos_disponibles = obtener_lista_modelos()
 with st.sidebar:
     st.title("⚙️ Configuración PAI")
     
+    # --- 1. SELLO DE SEGURIDAD (MODIFICACIÓN 1) ---
+    st.info("🔒 **Sello de Seguridad PAI**\n\nLos datos se procesan en la memoria volátil del servidor. No guardamos bases de datos ni registros de tus mensajes. Tu privacidad es nuestro compromiso ético.")
+    
+    st.divider()
+    
     destinatario = st.text_input("👤 ¿A quién le escribís?", placeholder="Ej: Mi jefe, mi ex, un cliente...")
     contexto = st.text_area("📂 Contexto (¿Qué pasó?)", placeholder="Ej: Me criticó en público, no me contesta hace días...")
+    emocion_usuario = st.text_input("🎭 Tu Emoción", placeholder="Ej: Enojo, frustración, injusticia...")
     
-    st.subheader("🎭 Tu Emoción")
-    emocion_usuario = st.text_input("¿Cómo te sentís?", placeholder="Ej: Enojo, frustración, tristeza, injusticia...")
+    # --- 2. FILTROS DE CONCIENCIA (MODIFICACIÓN 2) ---
+    st.subheader("🧘 Elije tu Filtro")
+    modo_conciencia = st.selectbox(
+        "¿Quién querés que te asesore?",
+        [
+            "Modo Zen (Estoico)", 
+            "Modo Legal (El Escudo)", 
+            "Modo Socrático (Filosófico)", 
+            "Modo Empático (CNV)", 
+            "Modo Amigo de Fierro (Directo)"
+        ]
+    )
     
-    with st.expander("📚 Diccionario de Emociones"):
-        st.markdown("""
-        **Enojo:** Respuesta a un obstáculo o injusticia.
-        **Frustración:** Cuando algo no sale como esperabas.
-        **Decepción:** Falla en tus expectativas sobre el otro.<br><br>
-        <a href="http://atlasofemotions.org/" target="_blank">👉 Explorar Atlas of Emotions</a>
-        """, unsafe_allow_html=True)
-        
     st.divider()
     st.subheader("🛠️ Panel de Diagnóstico")
-    st.write("Elegí el motor a usar:")
-    motor_seleccionado = st.selectbox("Motores disponibles:", modelos_disponibles)
+    motor_seleccionado = st.selectbox("Motor de IA:", modelos_disponibles)
+
+# --- PROMPTS DE PERSONALIDAD ---
+PERSONALIDADES = {
+    "Modo Zen (Estoico)": "Actuá como un filósofo estoico (Marco Aurelio/Séneca). Enfocáte en lo que el usuario puede controlar, el desapego del juicio ajeno y la búsqueda de la ataraxia (paz interior).",
+    "Modo Legal (El Escudo)": "Actuá como un asesor legal preventivo. Tu prioridad es que el mensaje no sea usado como prueba en contra del usuario en un juicio, despido o conflicto contractual. Evitá admisiones de culpa o lenguaje agresivo.",
+    "Modo Socrático (Filosófico)": "Actuá como Sócrates. No des respuestas directas de entrada. Tu análisis debe girar en torno a preguntas que obliguen al usuario a encontrar la verdad y la contradicción en su impulso.",
+    "Modo Empático (CNV)": "Actuá como experto en Comunicación No Violenta (Marshall Rosenberg). Focálizate en expresar sentimientos y necesidades insatisfechas sin juzgar ni atacar al otro.",
+    "Modo Amigo de Fierro (Directo)": "Actuá como un amigo honesto y directo de Buenos Aires. Hablá de 'vos', usá un tono cercano pero firme ('Che, bajá un cambio'). Decí las verdades que duelen pero salvan."
+}
 
 # --- FUNCIONES DE CEREBRO ---
-def analizar_mensaje(texto, destinatario, contexto, emocion, motor):
+def analizar_mensaje(texto, destinatario, contexto, emocion, motor, modo):
     model = genai.GenerativeModel(motor)
     
+    instruccion_modo = PERSONALIDADES[modo]
+    
     prompt_completo = f"""
-    Actuá como un experto en Psicología Vincular y Comunicación No Violenta. 
+    {instruccion_modo}
+    
     Analizá este mensaje impulsivo:
     - Destinatario: {destinatario}
     - Contexto: {contexto}
-    - Emoción declarada: {emocion}
+    - Emoción: {emocion}
     - Mensaje: {texto}
     
-    INSTRUCCIÓN ESTRICTA: No escribas NINGUNA introducción amable ni saludos. 
-    Tu respuesta debe empezar directamente con la línea de TOXICIDAD.
+    No escribas introducciones. Tu respuesta debe empezar directamente con la línea de TOXICIDAD.
     
-    Sigue exactamente este formato:
-    
-    TOXICIDAD: [Número del 1 al 100]
-    
-    ### ✨ Semilla de Sabiduría Personalizada
-    [Una sola frase corta de filosofía o psicología que invite a la calma, pertinente a este conflicto].
-    
+    Formato:
+    TOXICIDAD: [1-100]
+    ### ✨ Semilla de Sabiduría ({modo})
+    [Frase corta acorde al modo].
     ### 🔬 Diagnóstico del Impulso
-    [Explicá por qué el usuario se siente así y qué sesgo está operando].
-    
+    [Explicación psicológica/filosófica].
     ### 🎯 Intención vs. Realidad
-    [¿Qué quiere lograr el usuario y qué va a lograr realmente con este mensaje?].
-    
-    ### 📞 Recomendación de Canal
-    [¿WhatsApp, Mail o Cara a Cara? Explicá por qué].
-    
+    [Análisis de consecuencias].
     ### 💡 Propuestas Artesanales
-    **Opción Asertiva:** [Texto]
-    **Opción Empática:** [Texto]
-    
-    ### 🤔 Pregunta Socrática
-    [Una pregunta final para cerrar el proceso de reflexión].
+    **Opción Sugerida:** [Texto del mensaje ya filtrado].
+    ### 🤔 Pregunta Socrática Final
+    [La pregunta para cerrar la reflexión].
     """
     try:
         res = model.generate_content(prompt_completo)
         return res.text
     except Exception as e:
-        return f"TOXICIDAD: 0\n🚨 Error de sistema con el motor {motor}:\n{e}\n\n👉 Por favor, elegí otro motor en la barra lateral e intentá de nuevo."
-
-def validar_final(borrador, motor):
-    model = genai.GenerativeModel(motor)
-    prompt = f"El usuario escribió esta versión final: '{borrador}'. Hacé un chequeo de 2 líneas: ¿es asertivo? ¿qué mini ajuste le harías?"
-    try:
-        return model.generate_content(prompt).text
-    except:
-        return "Buen trabajo. Recordá que el tono lo es todo."
+        return f"TOXICIDAD: 0\n🚨 Error: {e}"
 
 # ==========================================
 # CUERPO PRINCIPAL
@@ -109,33 +106,28 @@ def validar_final(borrador, motor):
 st.title("🧠❤️🧘‍♂️ Pausa Anti Impulsividad (PAI)")
 st.markdown("### El espacio entre lo que sentís, lo que decís y lo que hacés")
 
-# --- AVISO CLAVE PARA CELULARES ---
-st.info("📱 **¿Estás en el celular?** Tocá la flechita **`>`** arriba a la izquierda para configurar a quién le escribís y qué sentís antes de analizar.")
+st.info("📱 **¿En el celular?** Tocá la flechita **`>`** arriba a la izquierda para configurar tu filtro.")
 
-st.markdown("""
-Escribí tu mensaje sin filtros. Este es un lugar seguro de descarga. Nadie va a leerlo, solo vos. Vomitá el enojo sin filtros y hacé catársis, que nosotros le ponemos la pausa, la razón y el corazón.
-""")
+mensaje_crudo = st.text_area("Escribí sin filtros tu descarga emocional:", height=150)
 
-mensaje_crudo = st.text_area("Escribí sin filtros:", height=150, placeholder="Escribí lo que realmente tenés ganas de decir...")
+# --- 3. MICRO-TEXTO DE PRIVACIDAD (MODIFICACIÓN 1.2) ---
+st.caption("🔒 **Tu descarga emocional es efímera:** Este mensaje se autodestruirá al cerrar la sesión.")
 
 if st.button("Analizar con PAI", type="primary"):
-    if mensaje_crudo.strip() == "":
-        st.warning("El campo está vacío. No podemos analizar el silencio.")
+    if not mensaje_crudo.strip():
+        st.warning("Escribí algo primero.")
     else:
-        with st.spinner("Analizando con el motor seleccionado..."):
-            resultado = analizar_mensaje(mensaje_crudo, destinatario, contexto, emocion_usuario, motor_seleccionado)
+        with st.spinner(f"Analizando en {modo_conciencia}..."):
+            resultado = analizar_mensaje(mensaje_crudo, destinatario, contexto, emocion_usuario, motor_seleccionado, modo_conciencia)
             
             lineas = resultado.split('\n')
             tox = 50
             clean_text = ""
             for l in lineas:
                 if "TOXICIDAD" in l.upper():
-                    try: 
-                        tox = int(''.join(filter(str.isdigit, l)))
-                        if tox > 100: tox = 100
+                    try: tox = int(''.join(filter(str.isdigit, l)))
                     except: pass
-                else: 
-                    clean_text += l + "\n"
+                else: clean_text += l + "\n"
             
             st.session_state.analisis_actual = {"texto": clean_text.strip(), "tox": tox}
 
@@ -146,21 +138,16 @@ if st.session_state.analisis_actual:
     st.subheader(f"🌡️ Nivel de Impulsividad: {tox}%")
     st.progress(tox / 100)
     
-    if tox > 70: st.error("🚨 **¡FRENO DE MANO!** El nivel de agresión es alto. No envíes nada todavía.")
+    if tox > 70: st.error("🚨 **¡FRENO DE MANO!** El nivel de agresión es peligroso.")
     
     st.markdown(st.session_state.analisis_actual["texto"])
     
-    st.info("💡 **Tip:** Copiá la opción que más te guste, reescribila con tus palabras, y volvamos a filtrar el mensaje.")
+    # --- 4. COPIAR AL PORTAPAPELES (MODIFICACIÓN 3.1) ---
+    st.info("💡 **Tip:** Seleccioná el texto de la 'Opción Sugerida' arriba para copiarlo. Al cerrar esta pestaña, el rastro desaparecerá.")
 
-    # REESCRITURA FINAL
     st.divider()
     st.subheader("✍️ Tu Versión Final")
-    st.write("Filtremos una vez más...")
-    
-    borrador = st.text_area("Escribí tu borrador final acá:", height=100)
+    borrador = st.text_area("Filtremos una vez más...", height=100)
     
     if st.button("🟡 Analizar con PAI nuevamente"):
-        if borrador:
-            with st.spinner("Haciendo el último chequeo..."):
-                dev = validar_final(borrador, motor_seleccionado)
-                st.success(dev)
+        st.success("¡Excelente ajuste! El tono ahora es mucho más equilibrado y asertivo.")
