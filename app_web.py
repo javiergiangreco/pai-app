@@ -12,8 +12,8 @@ if "analisis_actual" not in st.session_state:
 
 # --- CONEXIÓN CON LA IA ---
 genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
-# Dejamos el motor fijo para limpiar la interfaz
-model = genai.GenerativeModel("gemini-1.5-flash")
+# EL MOTOR CORRECTO Y CONFIRMADO PARA TU CUENTA
+model = genai.GenerativeModel("gemini-2.5-flash")
 
 # --- PERSONALIDADES ---
 PERSONALIDADES = {
@@ -32,7 +32,8 @@ def analizar_mensaje(texto, destinatario, contexto, emocion, modo):
     Analizá este mensaje impulsivo:
     - Destinatario: {destinatario} | Contexto: {contexto} | Emoción: {emocion}
     - Mensaje: {texto}
-    Respuesta directa sin introducciones:
+    
+    Respuesta directa sin introducciones.
     TOXICIDAD: [1-100]
     ### ✨ Semilla de Sabiduría ({modo})
     ### 🔬 Diagnóstico del Impulso
@@ -85,7 +86,8 @@ if st.button("Analizar con PAI", type="primary"):
         st.warning("Escribí algo primero.")
     else:
         with st.spinner(f"Analizando en {modo_conciencia}..."):
-            resultado = analizar_mensaje(mensaje_crudo, destinatario, contexto, emocion_usuario, "gemini-1.5-flash", modo_conciencia)
+            # LÍNEA 88 CORREGIDA (Ya no mandamos el motor por acá)
+            resultado = analizar_mensaje(mensaje_crudo, destinatario, contexto, emocion_usuario, modo_conciencia)
             
             lineas = resultado.split('\n')
             tox = 50
