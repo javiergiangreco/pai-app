@@ -13,6 +13,8 @@ st.set_page_config(
 # --- MEMORIA Y ESTADO ---
 if "analisis_actual" not in st.session_state:
     st.session_state.analisis_actual = None
+if "validacion_final" not in st.session_state:
+    st.session_state.validacion_final = None
 
 # --- 2. CONEXIÓN CON LA IA ---
 try:
@@ -58,7 +60,16 @@ def analizar_mensaje(texto, destinatario, contexto, emocion, modo):
 
 def validar_final(borrador, modo):
     instruccion_modo = PERSONALIDADES[modo]
-    prompt = f"{instruccion_modo} El usuario reescribió su mensaje: '{borrador}'. Hacé un chequeo breve de 2 líneas."
+    prompt = f"""
+    {instruccion_modo} 
+    El usuario reescribió su mensaje: '{borrador}'. 
+    Analizalo de nuevo. ¿Bajó la toxicidad?
+    
+    Respeta este formato exacto:
+    TOXICIDAD: [Número del 1 al 100]
+    ### 📝 Devolución Final
+    [Tu feedback breve en 2 líneas]
+    """
     return model.generate_content(prompt).text
 
 # ==========================================
@@ -134,14 +145,32 @@ if st.session_state.analisis_actual:
     
     if st.button("🟡 Analizar con PAI nuevamente"):
         if borrador.strip():
-            with st.spinner("Revisando..."):
+            with st.spinner("Calculando nueva toxicidad..."):
                 try:
-                    dev = validar_final(borrador, modo_conciencia)
-                    st.success(dev)
+                    res_v = validar_final(borrador, modo_conciencia)
+                    lineas_v = res_v.split('\n')
+                    tox_v = 10
+                    clean_v = ""
+                    for lv in lineas_v:
+                        if "TOXICIDAD" in lv.upper():
+                            match_v = re.search(r'\d+', lv)
+                            if match_v: 
+                                tox_v = int(match_v.group())
+                                if tox_v > 100: tox_v = 100
+                        else: 
+                            clean_v += lv + "\n"
+                    st.session_state.validacion_final = {"texto": clean_v.strip(), "tox": tox_v}
                 except:
                     st.error("No se pudo completar el segundo chequeo. Intentá de nuevo.")
+
+    if st.session_state.validacion_final:
+        tv = st.session_state.validacion_final["tox"]
+        st.write(f"📊 **Nuevo Nivel de Impulsividad: {tv}%**")
+        st.progress(tv / 100)
+        st.success(st.session_state.validacion_final["texto"])
 
     st.divider()
     if st.button("🔄 Nueva Pausa"):
         st.session_state.analisis_actual = None
+        st.session_state.validacion_final = None
         st.rerun()
