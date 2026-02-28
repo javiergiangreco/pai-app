@@ -133,9 +133,15 @@ if st.session_state.analisis_actual:
     st.subheader(f"🌡️ Nivel de Impulsividad: {tox}%")
     st.progress(tox / 100)
     
-    if tox > 70: st.error("🚨 **¡FRENO DE MANO!** El nivel de agresión es peligroso.")
+    texto_analisis = st.session_state.analisis_actual["texto"]
     
-    st.markdown(st.session_state.analisis_actual["texto"])
+    # SEMÁFORO DEL PRIMER ANÁLISIS
+    if tox >= 65:
+        st.error(f"🚨 **¡FRENO DE MANO! (Nivel Crítico)**\n\n{texto_analisis}")
+    elif tox >= 30:
+        st.warning(f"⚠️ **Atención (Nivel Medio)**\n\n{texto_analisis}")
+    else:
+        st.success(f"✅ **Bajo Control (Nivel Saludable)**\n\n{texto_analisis}")
     
     st.info("💡 **Tip:** Copiá la respuesta abajo, reescribila con tu voz, tu tono, tu estilo, y volvamos a filtrarla.")
 
@@ -163,11 +169,20 @@ if st.session_state.analisis_actual:
                 except:
                     st.error("No se pudo completar el segundo chequeo. Intentá de nuevo.")
 
+    # SEMÁFORO DE LA VERSIÓN FINAL
     if st.session_state.validacion_final:
         tv = st.session_state.validacion_final["tox"]
+        texto_final = st.session_state.validacion_final["texto"]
+        
         st.write(f"📊 **Nuevo Nivel de Impulsividad: {tv}%**")
         st.progress(tv / 100)
-        st.success(st.session_state.validacion_final["texto"])
+        
+        if tv >= 65:
+            st.error(texto_final)
+        elif tv >= 30:
+            st.warning(texto_final)
+        else:
+            st.success(texto_final)
 
     st.divider()
     if st.button("🔄 Nueva Pausa"):
