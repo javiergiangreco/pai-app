@@ -126,7 +126,7 @@ if st.session_state.analisis_actual:
     
     st.markdown(st.session_state.analisis_actual["texto"])
     
-    st.info("💡 **Tip:** Copiá la opción que más te guste, reescribila abajo y volvamos a filtrarla.")
+    st.info("💡 **Tip:** Copiá la respuesta abajo, reescribila con tu voz, tu tono, tu estilo, y volvamos a filtrarla.")
 
     st.divider()
     st.subheader("✍️ Tu Versión Final")
