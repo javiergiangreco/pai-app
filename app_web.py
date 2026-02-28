@@ -7,7 +7,7 @@ st.set_page_config(
     page_title="PAI - Pausa Anti Impulsividad",
     page_icon="🧠",
     layout="wide",
-    initial_sidebar_state="expanded", # Expandido para mostrar tu Branding
+    initial_sidebar_state="expanded",
     menu_items={
         'About': "Dominio oficial: www.pausaantiimpulsividad.com.ar"
     }
@@ -20,7 +20,7 @@ st.markdown("""
     .block-container {
         padding-top: 2rem;
         padding-bottom: 4rem;
-        max-width: 950px; /* Limita el ancho para centrar la lectura y dar aire */
+        max-width: 950px;
     }
     .sidebar-bio {
         font-size: 0.95rem;
@@ -57,7 +57,7 @@ st.markdown("""
         margin-top: 4rem;
         padding: 1.5rem 2rem;
         background-color: #f8f9fa;
-        border-left: 4px solid #0a66c2; /* Azul LinkedIn */
+        border-left: 4px solid #0a66c2;
         border-radius: 4px;
         font-size: 0.95rem;
         color: #333;
@@ -67,6 +67,22 @@ st.markdown("""
         font-weight: 600;
         text-decoration: none;
     }
+    .blog-btn {
+        display: block; 
+        padding: 0.85rem 1rem; 
+        background-color: #f8f9fa; 
+        border: 1px solid #ddd; 
+        border-radius: 8px; 
+        text-decoration: none; 
+        color: #333 !important; 
+        text-align: center; 
+        font-size: 0.95rem; 
+        transition: all 0.2s;
+    }
+    .blog-btn:hover {
+        background-color: #e9ecef;
+        border-color: #ccc;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -74,14 +90,26 @@ st.markdown("""
 with st.sidebar:
     st.header("🧠 PAI")
     st.markdown("### El Autor")
+    
+    # BIO EN VIÑETAS
     st.markdown("""
     <div class='sidebar-bio'>
-    Diseñado por <b>Javier E. Giangreco</b>.<br><br>
-    Profesor de Filosofía, Psicología y Lógica. Licenciado en Educación con Orientación en Gestión. Ingeniero de Criterio explorando la intersección entre humanidad e inteligencia artificial.
+        Diseñado por <b>Javier E. Giangreco</b>.<br><br>
+        <ul style="padding-left: 20px; margin-bottom: 0;">
+            <li><b>Profesor</b> de Filosofía, Psicología y Lógica.</li>
+            <li><b>Licenciado</b> en Educación con Orientación en Gestión.</li>
+            <li><b>Ingeniero de Criterio</b> explorando la intersección entre humanidad e inteligencia artificial.</li>
+        </ul>
     </div>
     """, unsafe_allow_html=True)
     
-    st.link_button("✍️ Leé la filosofía detrás de esta app en el blog IA: Inteligencia Artesanal", "https://javiergiangreco.substack.com/", use_container_width=True)
+    # BOTÓN DEL BLOG PERSONALIZADO
+    st.markdown("""
+    <a href="https://javiergiangreco.substack.com/" target="_blank" class="blog-btn">
+        ✍️ Leé la filosofía detrás de esta app en el blog <br><b>IA: Inteligencia Artesanal</b>
+    </a>
+    """, unsafe_allow_html=True)
+    
     st.divider()
     st.caption("🌐 www.pausaantiimpulsividad.com.ar")
 
@@ -260,12 +288,13 @@ if st.session_state.analisis_actual:
 
     st.divider()
     
-    # --- CAPTURA DE VALOR (Historias Anónimas) ---
+    # --- CAPTURA DE VALOR (Historias Anónimas con mail explícito) ---
     st.markdown("""
     <div class="feedback-box">
         <h4>🔥 ¿PAI te salvó de un incendio emocional hoy?</h4>
         <p style="color: #666; font-size: 0.95rem;">Contanos tu historia de forma 100% anónima para que sigamos diseñando pausas que valgan la pena.</p>
-        <a href="mailto:javiergiangreco@gmail.com?subject=PAI%20-%20mensajes&body=¡Hola%20Javier!%20Te%20cuento%20mi%20historia%20anónima%20con%20PAI:%0D%0A%0D%0A" class="mail-btn">✉️ Enviar mi historia</a>
+        <a href="mailto:javiergiangreco@gmail.com?subject=PAI%20-%20mensajes&body=¡Hola%20Javier!%20Te%20cuento%20mi%20historia%20anónima%20con%20PAI:%0D%0A%0D%0A" class="mail-btn">✉️ Abrir mi correo</a>
+        <p style="color: #888; font-size: 0.85rem; margin-top: 15px;"><i>Si el botón no funciona en tu dispositivo, copiá y pegá esta dirección:<br><b>javiergiangreco@gmail.com</b></i></p>
     </div>
     """, unsafe_allow_html=True)
     
