@@ -7,8 +7,83 @@ st.set_page_config(
     page_title="PAI - Pausa Anti Impulsividad",
     page_icon="🧠",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="expanded", # Expandido para mostrar tu Branding
+    menu_items={
+        'About': "Dominio oficial: www.pausaantiimpulsividad.com.ar"
+    }
 )
+
+# --- INYECCIÓN CSS (Concepto 'Ma' y Branding) ---
+st.markdown("""
+<style>
+    /* Concepto 'Ma': Espacios amplios, diseño despojado y calmo */
+    .block-container {
+        padding-top: 2rem;
+        padding-bottom: 4rem;
+        max-width: 950px; /* Limita el ancho para centrar la lectura y dar aire */
+    }
+    .sidebar-bio {
+        font-size: 0.95rem;
+        color: #4a4a4a;
+        line-height: 1.6;
+        margin-bottom: 20px;
+    }
+    .feedback-box {
+        background-color: #ffffff;
+        border: 1px solid #eaeaea;
+        padding: 2.5rem 2rem;
+        border-radius: 8px;
+        text-align: center;
+        margin-top: 3rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    }
+    .mail-btn {
+        display: inline-block;
+        background-color: #212529;
+        color: #ffffff !important;
+        padding: 12px 28px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 500;
+        margin-top: 15px;
+        transition: all 0.2s;
+    }
+    .mail-btn:hover {
+        background-color: #343a40;
+        transform: translateY(-2px);
+    }
+    .corporate-cta {
+        margin-top: 4rem;
+        padding: 1.5rem 2rem;
+        background-color: #f8f9fa;
+        border-left: 4px solid #0a66c2; /* Azul LinkedIn */
+        border-radius: 4px;
+        font-size: 0.95rem;
+        color: #333;
+    }
+    .corporate-cta a {
+        color: #0a66c2;
+        font-weight: 600;
+        text-decoration: none;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# --- 2. SIDEBAR (Identidad y Propósito) ---
+with st.sidebar:
+    st.header("🧠 PAI")
+    st.markdown("### El Autor")
+    st.markdown("""
+    <div class='sidebar-bio'>
+    Diseñado por <b>Javier E. Giangreco</b>.<br><br>
+    Profesor de Filosofía, Psicología y Lógica. Licenciado en Educación con Orientación en Gestión. Ingeniero de Criterio explorando la intersección entre humanidad e inteligencia artificial.
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.link_button("✍️ Leé la filosofía detrás de esta app en el blog IA: Inteligencia Artesanal", "https://javiergiangreco.substack.com/", use_container_width=True)
+    st.divider()
+    st.caption("🌐 www.pausaantiimpulsividad.com.ar")
 
 # --- MEMORIA Y ESTADO ---
 if "analisis_actual" not in st.session_state:
@@ -16,14 +91,14 @@ if "analisis_actual" not in st.session_state:
 if "validacion_final" not in st.session_state:
     st.session_state.validacion_final = None
 
-# --- 2. CONEXIÓN CON LA IA ---
+# --- 3. CONEXIÓN CON LA IA ---
 try:
     genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
     model = genai.GenerativeModel("gemini-2.5-flash")
 except Exception:
     st.error("🔒 Error de configuración: Verificá las llaves de seguridad.")
 
-# --- 3. TUS 7 MODOS DE CONCIENCIA (Ordenados y actualizados) ---
+# --- 4. TUS 7 MODOS DE CONCIENCIA ---
 PERSONALIDADES = {
     "Modo Empático (CNV)": "Actuá como experto en Comunicación No Violenta. Focálizate en expresar necesidades insatisfechas sin juzgar ni atacar.",
     "Modo Asertivo": "Actuá como un experto en comunicación asertiva. Tu objetivo es ser firme y claro en la defensa de tus derechos y límites, pero sin caer en la agresión ni en la pasividad.",
@@ -34,7 +109,7 @@ PERSONALIDADES = {
     "Modo Amigo de Fierro (Directo)": "Actuá como un amigo honesto de Buenos Aires. Tono cercano, 'voseo' y firmeza ('Che, bajá un cambio')."
 }
 
-# --- 4. FUNCIONES DE CEREBRO ---
+# --- 5. FUNCIONES DE CEREBRO ---
 def analizar_mensaje(texto, destinatario, contexto, emocion, modo):
     instruccion_modo = PERSONALIDADES[modo]
     prompt_completo = f"""
@@ -73,7 +148,7 @@ def validar_final(borrador, modo):
     return model.generate_content(prompt).text
 
 # ==========================================
-# 5. DISEÑO DE INTERFAZ
+# 6. DISEÑO DE INTERFAZ PRINCIPAL
 # ==========================================
 
 col_tit, col_sello = st.columns([2, 1])
@@ -82,7 +157,7 @@ with col_tit:
     st.caption("Pausa Anti Impulsividad")
 with col_sello:
     st.write("") 
-    st.markdown("<p style='text-align: right; color: gray; font-size: 0.8rem;'>🔒 Sello de Seguridad PAI: Tu privacidad es nuestro compromiso ético</p>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: right; color: gray; font-size: 0.8rem;'>🔒 Sello de Seguridad PAI: Tu privacidad es nuestro compromiso ético<br>🌐 www.pausaantiimpulsividad.com.ar</p>", unsafe_allow_html=True)
 
 st.markdown("---")
 
@@ -92,7 +167,6 @@ with c1:
     emocion_usuario = st.text_input("🎭 Tu Emoción", placeholder="Ej: Enojo, injusticia...")
 with c2:
     contexto = st.text_input("📂 Contexto corto", placeholder="Ej: Me criticó en público...")
-    # El orden en el desplegable se respeta por el orden en el diccionario
     modo_conciencia = st.selectbox("🧘 Elije tu Filtro", list(PERSONALIDADES.keys()))
 
 st.markdown("---")
@@ -126,7 +200,7 @@ if st.button("Analizar con PAI", type="primary"):
                 st.error("🧘 **PAI está meditando profundamente...**")
                 st.info("Hubo una pequeña saturación. Por favor, intentá de nuevo en 5 segundos.")
 
-# --- 6. RESULTADOS Y TALLER DE REESCRITURA ---
+# --- 7. RESULTADOS Y TALLER DE REESCRITURA ---
 if st.session_state.analisis_actual:
     st.divider()
     tox = st.session_state.analisis_actual["tox"]
@@ -185,7 +259,25 @@ if st.session_state.analisis_actual:
             st.success(texto_final)
 
     st.divider()
+    
+    # --- CAPTURA DE VALOR (Historias Anónimas) ---
+    st.markdown("""
+    <div class="feedback-box">
+        <h4>🔥 ¿PAI te salvó de un incendio emocional hoy?</h4>
+        <p style="color: #666; font-size: 0.95rem;">Contanos tu historia de forma 100% anónima para que sigamos diseñando pausas que valgan la pena.</p>
+        <a href="mailto:javiergiangreco@gmail.com?subject=PAI%20-%20mensajes&body=¡Hola%20Javier!%20Te%20cuento%20mi%20historia%20anónima%20con%20PAI:%0D%0A%0D%0A" class="mail-btn">✉️ Enviar mi historia</a>
+    </div>
+    """, unsafe_allow_html=True)
+    
     if st.button("🔄 Nueva Pausa"):
         st.session_state.analisis_actual = None
         st.session_state.validacion_final = None
         st.rerun()
+
+# --- 8. CALL TO ACTION CORPORATIVO (Footer Global) ---
+st.markdown("""
+<div class="corporate-cta">
+    🏢 <b>¿Querés implementar una versión personalizada de PAI para la comunicación interna de tu empresa?</b><br> 
+    <a href="https://www.linkedin.com/in/javiergiangreco/" target="_blank">Conversemos en LinkedIn.</a>
+</div>
+""", unsafe_allow_html=True)
