@@ -2,27 +2,37 @@ import streamlit as st
 import google.generativeai as genai
 import re
 
-# --- CONFIGURACIÓN DE PÁGINA ---
-st.set_page_config(page_title="PAI - Pausa Anti Impulsividad", page_icon="🧠 ❤️ 🧘‍♂️", layout="wide")
+# --- 1. CONFIGURACIÓN DE PÁGINA ---
+st.set_page_config(
+    page_title="PAI - Pausa Anti Impulsividad",
+    page_icon="🧠",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
 
 # --- MEMORIA Y ESTADO ---
 if "analisis_actual" not in st.session_state:
     st.session_state.analisis_actual = None
 
-# --- CONEXIÓN CON LA IA ---
-genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
-model = genai.GenerativeModel("gemini-2.5-flash")
+# --- 2. CONEXIÓN CON LA IA ---
+try:
+    genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
+    model = genai.GenerativeModel("gemini-2.5-flash")
+except Exception:
+    st.error("🔒 Error de configuración: Verificá las llaves de seguridad.")
 
-# --- PERSONALIDADES ---
+# --- 3. TUS 7 MODOS DE CONCIENCIA (Ordenados y actualizados) ---
 PERSONALIDADES = {
-    "Modo Zen (Estoico)": "Actuá como un filósofo estoico (Marco Aurelio/Séneca). Enfocáte en lo que el usuario puede controlar, el desapego y la ataraxia.",
-    "Modo Legal (El Escudo)": "Actuá como un asesor legal preventivo. Tu prioridad es evitar admisiones de culpa o lenguaje que pueda usarse en contra del usuario.",
-    "Modo Socrático (Filosófico)": "Actuá como Sócrates. Tu análisis debe girar en torno a preguntas que obliguen al usuario a cuestionar su propio impulso.",
-    "Modo Empático (CNV)": "Actuá como experto en Comunicación No Violenta. Focálizate en expresar sentimientos y necesidades insatisfechas sin juzgar.",
-    "Modo Amigo de Fierro (Directo)": "Actuá como un amigo honesto de Buenos Aires. Hablá de 'vos', con tono cercano pero firme ('Che, bajá un cambio')."
+    "Modo Empático (CNV)": "Actuá como experto en Comunicación No Violenta. Focálizate en expresar necesidades insatisfechas sin juzgar ni atacar.",
+    "Modo Asertivo": "Actuá como un experto en comunicación asertiva. Tu objetivo es ser firme y claro en la defensa de tus derechos y límites, pero sin caer en la agresión ni en la pasividad.",
+    "Modo Legal (El Escudo)": "Actuá como un asesor legal preventivo. Tu prioridad es que el mensaje no sea usado en contra del usuario en un futuro conflicto.",
+    "Modo Socrático (Filosófico)": "Actuá como Sócrates. Tu análisis debe girar en torno a preguntas que obliguen al usuario a encontrar la verdad detrás de su impulso.",
+    "Modo Zen (Estoico)": "Actuá como un filósofo estoico. Enfocáte en lo que el usuario puede controlar y en la búsqueda de la ataraxia (paz interior).",
+    "Modo Espiritual (Católico)": "Actuá desde la espiritualidad cristiana. Focálizate en la caridad, el perdón, la humildad y la paz del corazón. Recordá la importancia de tratar al otro como a un hermano.",
+    "Modo Amigo de Fierro (Directo)": "Actuá como un amigo honesto de Buenos Aires. Tono cercano, 'voseo' y firmeza ('Che, bajá un cambio')."
 }
 
-# --- FUNCIONES DE CEREBRO ---
+# --- 4. FUNCIONES DE CEREBRO ---
 def analizar_mensaje(texto, destinatario, contexto, emocion, modo):
     instruccion_modo = PERSONALIDADES[modo]
     prompt_completo = f"""
@@ -31,45 +41,30 @@ def analizar_mensaje(texto, destinatario, contexto, emocion, modo):
     - Destinatario: {destinatario} | Contexto: {contexto} | Emoción: {emocion}
     - Mensaje: {texto}
     
-    INSTRUCCIÓN ESTRICTA: No escribas introducciones, ni saludos.
+    INSTRUCCIÓN ESTRICTA: No escribas introducciones.
     El valor de TOXICIDAD debe ser ÚNICAMENTE un número del 1 al 100.
     
     Respeta este formato exacto:
-    TOXICIDAD: [Número del 1 al 100]
+    TOXICIDAD: [Número]
     ### ✨ Semilla de Sabiduría ({modo})
-    [Frase pertinente al modo]
     ### 🔬 Diagnóstico del Impulso
-    [Explicación]
     ### 🎯 Intención vs. Realidad
-    [Análisis]
     ### 💡 Propuesta Sugerida
     **Versión Filtrada:** [Texto sugerido]
     ### 🤔 Pregunta Socrática Final
-    [Pregunta de cierre]
     """
-    try:
-        res = model.generate_content(prompt_completo)
-        return res.text
-    except Exception as e:
-        return f"TOXICIDAD: 0\n🚨 Error: {e}"
+    res = model.generate_content(prompt_completo)
+    return res.text
 
 def validar_final(borrador, modo):
     instruccion_modo = PERSONALIDADES[modo]
-    prompt = f"""
-    {instruccion_modo}
-    El usuario reescribió su mensaje original con esta versión final: '{borrador}'. 
-    Hacé un chequeo breve (2 o 3 líneas máximo): ¿Logró bajar la toxicidad y aplicar una buena comunicación? ¿Qué mini ajuste le harías antes de que apriete 'Enviar'?
-    """
-    try:
-        return model.generate_content(prompt).text
-    except:
-        return "Buen trabajo. Recordá que el tono lo es todo."
+    prompt = f"{instruccion_modo} El usuario reescribió su mensaje: '{borrador}'. Hacé un chequeo breve de 2 líneas."
+    return model.generate_content(prompt).text
 
 # ==========================================
-# CUERPO PRINCIPAL
+# 5. DISEÑO DE INTERFAZ
 # ==========================================
 
-# Fila 1: Título y Sello de Seguridad
 col_tit, col_sello = st.columns([2, 1])
 with col_tit:
     st.title("🧠❤️🧘‍♂️ PAI")
@@ -80,13 +75,13 @@ with col_sello:
 
 st.markdown("---")
 
-# Fila 2: Las 4 Preguntas de Configuración
 c1, c2 = st.columns(2)
 with c1:
     destinatario = st.text_input("👤 ¿A quién le escribís?", placeholder="Ej: Mi jefe, mi ex...")
     emocion_usuario = st.text_input("🎭 Tu Emoción", placeholder="Ej: Enojo, injusticia...")
 with c2:
     contexto = st.text_input("📂 Contexto corto", placeholder="Ej: Me criticó en público...")
+    # El orden en el desplegable se respeta por el orden en el diccionario
     modo_conciencia = st.selectbox("🧘 Elije tu Filtro", list(PERSONALIDADES.keys()))
 
 st.markdown("---")
@@ -99,25 +94,28 @@ if st.button("Analizar con PAI", type="primary"):
         st.warning("Escribí algo primero.")
     else:
         with st.spinner(f"Analizando en {modo_conciencia}..."):
-            resultado = analizar_mensaje(mensaje_crudo, destinatario, contexto, emocion_usuario, modo_conciencia)
-            
-            lineas = resultado.split('\n')
-            tox = 50
-            clean_text = ""
-            for l in lineas:
-                if "TOXICIDAD" in l.upper():
-                    try: 
+            try:
+                resultado = analizar_mensaje(mensaje_crudo, destinatario, contexto, emocion_usuario, modo_conciencia)
+                
+                lineas = resultado.split('\n')
+                tox = 50
+                clean_text = ""
+                for l in lineas:
+                    if "TOXICIDAD" in l.upper():
                         match = re.search(r'\d+', l)
                         if match:
                             tox = int(match.group())
                             if tox > 100: tox = 100
-                    except: pass
-                else: 
-                    clean_text += l + "\n"
+                    else: 
+                        clean_text += l + "\n"
+                
+                st.session_state.analisis_actual = {"texto": clean_text.strip(), "tox": tox}
             
-            st.session_state.analisis_actual = {"texto": clean_text.strip(), "tox": tox}
+            except Exception:
+                st.error("🧘 **PAI está meditando profundamente...**")
+                st.info("Hubo una pequeña saturación. Por favor, intentá de nuevo en 5 segundos.")
 
-# RESULTADOS
+# --- 6. RESULTADOS Y TALLER DE REESCRITURA ---
 if st.session_state.analisis_actual:
     st.divider()
     tox = st.session_state.analisis_actual["tox"]
@@ -128,22 +126,20 @@ if st.session_state.analisis_actual:
     
     st.markdown(st.session_state.analisis_actual["texto"])
     
-    st.info("💡 **Tip:** Copiá la opción que más te guste, reescribila con tus palabras, y volvamos a filtrar el mensaje.")
+    st.info("💡 **Tip:** Copiá la opción que más te guste, reescribila abajo y volvamos a filtrarla.")
 
-    # --- EL ESPACIO EDUCATIVO (RESTAURADO Y MEJORADO) ---
     st.divider()
     st.subheader("✍️ Tu Versión Final")
-    st.write("Masticá el consejo y reescribí el mensaje a tu manera para un último chequeo.")
-    
     borrador = st.text_area("Escribí tu borrador final acá:", height=100)
     
     if st.button("🟡 Analizar con PAI nuevamente"):
         if borrador.strip():
-            with st.spinner(f"Haciendo el último chequeo ({modo_conciencia})..."):
-                dev = validar_final(borrador, modo_conciencia)
-                st.success(dev)
-        else:
-            st.warning("Escribí tu versión final en la caja de arriba para poder revisarla.")
+            with st.spinner("Revisando..."):
+                try:
+                    dev = validar_final(borrador, modo_conciencia)
+                    st.success(dev)
+                except:
+                    st.error("No se pudo completar el segundo chequeo. Intentá de nuevo.")
 
     st.divider()
     if st.button("🔄 Nueva Pausa"):
