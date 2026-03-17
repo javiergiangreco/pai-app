@@ -147,7 +147,7 @@ with c2:
 st.markdown("---")
 
 # LEYENDA DE PRIVACIDAD
-st.markdown('<p class="privacy-note">🔒 Garantía de Privacidad: Tu mensaje se procesa de forma efímera; no guardamos registro de lo que escribís.</p>', unsafe_allow_html=True)
+st.markdown('<p class="privacy-note">🔒 Garantía de Privacidad: Tu mensaje se autodestruirá al cerrar sesión.</p>', unsafe_allow_html=True)
 mensaje_crudo = st.text_area("Escribí acá tu descarga sin filtros:", height=120)
 
 # --- 6. EJECUCIÓN DEL ANÁLISIS ---
