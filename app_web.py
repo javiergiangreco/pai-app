@@ -2,8 +2,7 @@ import streamlit as st
 import google.generativeai as genai
 import re
 
-# --- 1. CONFIGURACIÓN DE PÁGINA (Identidad PWA) ---
-# Al poner PAI y el emoji 🧠, así se verá cuando lo instalen en el celu.
+# --- 1. CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(
     page_title="PAI",
     page_icon="🧠",
@@ -12,19 +11,20 @@ st.set_page_config(
     menu_items={'About': "Dominio oficial: www.pausaantiimpulsividad.com.ar"}
 )
 
-# --- 2. ESTILOS Y TRUCOS VISUALES (El 'Ma' y Mobile Check) ---
+# --- 2. ESTILOS Y TRUCOS VISUALES ---
 st.markdown("""
     <style>
         /* Concepto 'Ma': Espacios y calma */
         .block-container { padding-top: 1.5rem; max-width: 850px; }
         
-        /* OCULTAR EN PC Y MOSTRAR EN MÓVIL (Punto 1) */
-        .mobile-only { display: none; }
-        @media (max-width: 768px) {
-            .mobile-only { display: block; margin-bottom: 20px; }
+        /* OCULTAR EXPANDER EN PC Y MOSTRAR EN MÓVIL */
+        @media (min-width: 768px) {
+            [data-testid="stExpander"] {
+                display: none;
+            }
         }
 
-        /* Estilo para la leyenda de privacidad (Punto 4) */
+        /* Estilo para la leyenda de privacidad */
         .privacy-note {
             font-size: 0.85rem;
             color: #6c757d;
@@ -32,11 +32,11 @@ st.markdown("""
             margin-bottom: 5px;
         }
 
-        /* Botón del blog en la barra lateral */
+        /* Botón del blog unificado */
         .blog-btn {
             display: block; padding: 0.7rem; background-color: #f8f9fa; 
             border: 1px solid #ddd; border-radius: 8px; text-decoration: none; 
-            color: #333 !important; text-align: center; font-weight: 500;
+            color: #333 !important; text-align: center; font-weight: 500; margin-top: 10px;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -53,13 +53,11 @@ with st.sidebar:
     """)
     st.markdown(f'<a href="https://javiergiangreco.substack.com/" target="_blank" class="blog-btn">✍️ IA: Inteligencia Artesanal</a>', unsafe_allow_html=True)
     st.divider()
-    # Instrucción para instalar como App (Punto 3)
-    st.caption("📲 **Instalá PAI:** En tu celu, tocá los 3 puntos del navegador y seleccioná 'Instalar' o 'Agregar a inicio'.")
 
 # --- 4. CEREBRO IA ---
 try:
     genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
-    model = genai.GenerativeModel("gemini-1.5-flash") # Usamos 1.5 por estabilidad
+    model = genai.GenerativeModel("gemini-1.5-flash")
 except:
     st.error("Error de conexión.")
 
@@ -77,20 +75,19 @@ PERSONALIDADES = {
 st.title("🧠❤️🧘‍♂️ PAI")
 st.caption("Pausa Anti Impulsividad")
 
-# CONTENEDOR MÓVIL (Punto 1)
-st.markdown('<div class="mobile-only">', unsafe_allow_html=True)
+# --- EXPANDER (Solo visible en móvil, texto idéntico a la barra lateral) ---
 with st.expander("👤 Acerca del Autor"):
     st.markdown("""
         Diseñado por **Javier E. Giangreco**.
-        * Profesor e Ingeniero de Criterio.
-        * [IA: Inteligencia Artesanal](https://javiergiangreco.substack.com/)
-        * 📲 *Para instalar como app: tocá los 3 puntos del navegador y seleccioná 'Instalar'.*
+        * **Profesor** de Filosofía, Psicología y Lógica.
+        * **Licenciado** en Educación (Gestión).
+        * **Ingeniero de Criterio**.
     """)
-st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown(f'<a href="https://javiergiangreco.substack.com/" target="_blank" class="blog-btn">✍️ IA: Inteligencia Artesanal</a>', unsafe_allow_html=True)
 
 st.markdown("---")
 
-# Campos de entrada
+# --- CAMPOS DE ENTRADA ---
 c1, c2 = st.columns(2)
 with c1:
     destinatario = st.text_input("👤 ¿A quién le escribís?", placeholder="Ej: Mi jefe, un grupo...")
@@ -101,7 +98,7 @@ with c2:
 
 st.markdown("---")
 
-# LEYENDA DE PRIVACIDAD (Punto 4)
+# --- LEYENDA DE PRIVACIDAD ---
 st.markdown('<p class="privacy-note">🔒 Garantía de Privacidad: Tu mensaje se procesa de forma efímera; no guardamos registro de lo que escribís.</p>', unsafe_allow_html=True)
 
 mensaje_crudo = st.text_area("Escribí acá tu descarga sin filtros:", height=150)
@@ -109,7 +106,7 @@ mensaje_crudo = st.text_area("Escribí acá tu descarga sin filtros:", height=15
 # (Lógica de análisis que ya tenés armada...)
 # st.button("Analizar con PAI")...
 
-# --- 6. FOOTER LEGAL (Punto 2) ---
+# --- 6. FOOTER LEGAL ---
 st.markdown("---")
 st.caption("""
 ⚠️ **Aviso de Responsabilidad:** PAI es una herramienta orientativa basada en IA. El accionar final es **exclusiva responsabilidad del usuario**. 
