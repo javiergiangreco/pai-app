@@ -50,7 +50,7 @@ st.markdown("""
 
 # --- 3. BARRA LATERAL (Escritorio) ---
 with st.sidebar:
-    st.header("🧠 PAI")
+    st.image("icono.png", width=100)
     st.markdown("### El Autor")
     st.markdown("""
         Diseñado por **Javier E. Giangreco**.
@@ -131,11 +131,13 @@ def validar_final(borrador, modo):
     return model.generate_content(prompt, safety_settings=CONFIG_SEGURIDAD).text
 
 # --- 5. INTERFAZ PRINCIPAL ---
-st.title("🧠❤️🧘‍♂️ PAI")
+st.image("icono.png", width=80)
+st.title("PAI")
 st.caption("Pausa Anti Impulsividad")
 
 # EXPANDER MÓVIL (Mismo texto que la barra lateral)
 with st.expander("👤 Acerca del Autor"):
+    st.image("icono.png", width=70)
     st.markdown("""
         Diseñado por **Javier E. Giangreco**.
         * **Profesor** de Filosofía, Psicología y Lógica.
