@@ -1,14 +1,3 @@
-¡Tenés toda la razón, Tano! Qué buen ojo. El problema es exactamente ese: en una de las versiones anteriores te bajé el modelo a gemini-1.5-flash pensando en la "estabilidad", pero las versiones 1.5 tienen los filtros de seguridad mucho más duros y a veces chocan con la configuración de Streamlit.
-
-En tu versión original usabas gemini-2.5-flash, que es más inteligente para entender el contexto (se da cuenta de que es un "simulador" y no un insulto real) y acepta mejor que le apaguemos los filtros.
-
-Además, ajusté la sintaxis exacta de CONFIG_SEGURIDAD a formato de "lista", que es la forma a prueba de balas que exige Google en sus últimas actualizaciones.
-
-NO modifiqué absolutamente nada más. Sigue el modo asertivo por default, la opción de instalar y el texto legal.
-
-Acá tenés el código final corregido. Copialo, pegalo y decile "Te odio" con total libertad:
-
-Python
 import streamlit as st
 import google.generativeai as genai
 import re
