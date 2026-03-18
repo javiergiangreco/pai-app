@@ -5,7 +5,7 @@ import re
 # --- 1. CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(
     page_title="PAI",
-    page_icon="🧠",
+    page_icon="icono.png",
     layout="wide",
     initial_sidebar_state="expanded",
     menu_items={'About': "Dominio oficial: www.pausaantiimpulsividad.com.ar"}
