@@ -131,7 +131,7 @@ def validar_final(borrador, modo):
     return model.generate_content(prompt, safety_settings=CONFIG_SEGURIDAD).text
 
 # --- 5. INTERFAZ PRINCIPAL ---
-col1, col2 = st.columns([1, 15]) # Los números manejan la proporción del espacio
+col1, col2 = st.columns([1, 6]) # Los números manejan la proporción del espacio
 with col1:
     st.image("icono.png", width=80)
 with col2:
