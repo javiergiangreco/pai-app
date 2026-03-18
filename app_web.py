@@ -235,7 +235,7 @@ if st.session_state.analisis_actual:
     <div class="feedback-box">
         <h4>🔥 ¿PAI te salvó de un incendio emocional hoy?</h4>
         <p style="color: #666; font-size: 0.95rem;">Contanos tu historia anónima para seguir mejorando.</p>
-        <a href="mailto:javiergiangreco@gmail.com?subject=PAI%20-%20mensajes" class="mail-btn">✉️ Escribir a Javier</a>
+        <a href="mailto:javiergiangreco@gmail.com?subject=PAI%20-%20mensajes" class="mail-btn">✉️ Escribime a javiergiangreco@gmail.com</a>
     </div>
     """, unsafe_allow_html=True)
     
