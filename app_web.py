@@ -60,6 +60,7 @@ with st.sidebar:
     """)
     st.markdown(f'<a href="https://javiergiangreco.substack.com/" target="_blank" class="blog-btn">✍️ IA: Inteligencia Artesanal</a>', unsafe_allow_html=True)
     st.divider()
+    st.caption("📲 **¿Querés usar PAI como App?** Abrí el menú de tu navegador (⋮) y elegí **'Agregar a la pantalla principal'**.")
 
 # --- MEMORIA Y ESTADO ---
 if "analisis_actual" not in st.session_state:
@@ -84,6 +85,14 @@ PERSONALIDADES = {
     "Modo Amigo de Fierro (Directo)": "Actuá como un amigo honesto de Buenos Aires. Tono cercano, 'voseo' y firmeza ('Che, bajá un cambio')."
 }
 
+# --- APAGAMOS LOS FILTROS DE SEGURIDAD PARA PERMITIR ANÁLISIS DE TOXICIDAD ---
+CONFIG_SEGURIDAD = {
+    'HARM_CATEGORY_HARASSMENT': 'BLOCK_NONE',
+    'HARM_CATEGORY_HATE_SPEECH': 'BLOCK_NONE',
+    'HARM_CATEGORY_SEXUALLY_EXPLICIT': 'BLOCK_NONE',
+    'HARM_CATEGORY_DANGEROUS_CONTENT': 'BLOCK_NONE'
+}
+
 def analizar_mensaje(texto, destinatario, contexto, emocion, modo):
     instruccion_modo = PERSONALIDADES[modo]
     prompt_completo = f"""
@@ -104,7 +113,7 @@ def analizar_mensaje(texto, destinatario, contexto, emocion, modo):
     **Versión Filtrada:** [Texto sugerido]
     ### 🤔 Pregunta Socrática Final
     """
-    return model.generate_content(prompt_completo).text
+    return model.generate_content(prompt_completo, safety_settings=CONFIG_SEGURIDAD).text
 
 def validar_final(borrador, modo):
     instruccion_modo = PERSONALIDADES[modo]
@@ -118,7 +127,7 @@ def validar_final(borrador, modo):
     ### 📝 Devolución Final
     [Tu feedback breve en 2 líneas]
     """
-    return model.generate_content(prompt).text
+    return model.generate_content(prompt, safety_settings=CONFIG_SEGURIDAD).text
 
 # --- 5. INTERFAZ PRINCIPAL ---
 st.title("🧠❤️🧘‍♂️ PAI")
@@ -133,6 +142,8 @@ with st.expander("👤 Acerca del Autor"):
         * **Ingeniero de Criterio**.
     """)
     st.markdown(f'<a href="https://javiergiangreco.substack.com/" target="_blank" class="blog-btn">✍️ IA: Inteligencia Artesanal</a>', unsafe_allow_html=True)
+    st.markdown("---")
+    st.caption("📲 **¿Querés usar PAI como App?** Abrí el menú de tu navegador (⋮) y elegí **'Agregar a la pantalla principal'**.")
 
 st.markdown("---")
 
@@ -142,7 +153,8 @@ with c1:
     emocion_usuario = st.text_input("🎭 Tu Emoción", placeholder="Ej: Frustración, enojo...")
 with c2:
     contexto = st.text_input("📂 Contexto corto", placeholder="Ej: Mail fuera de hora...")
-    modo_conciencia = st.selectbox("🧘 Elije tu Filtro", list(PERSONALIDADES.keys()))
+    # index=1 selecciona el Modo Asertivo por default
+    modo_conciencia = st.selectbox("🧘 Elije tu Filtro", list(PERSONALIDADES.keys()), index=1)
 
 st.markdown("---")
 
