@@ -131,8 +131,9 @@ def validar_final(borrador, modo):
     return model.generate_content(prompt, safety_settings=CONFIG_SEGURIDAD).text
 
 # --- 5. INTERFAZ PRINCIPAL ---
-  st.title("🧠❤️🧘‍♂️ PAI")
+st.title("🧠❤️🧘‍♂️ PAI")
 st.caption("Pausa Anti Impulsividad")
+st.image (icono.png)
 
 # EXPANDER MÓVIL (Mismo texto que la barra lateral)
 with st.expander("👤 Acerca del Autor"):
